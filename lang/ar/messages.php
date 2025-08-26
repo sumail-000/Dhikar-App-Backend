@@ -6,4 +6,7 @@ return [
     'invalid_code' => 'رمز غير صالح.',
     'expired_code' => 'انتهت صلاحية الرمز.',
     'password_reset' => 'تم إعادة تعيين كلمة المرور.',
+    'code_verified' => 'تم التحقق من الرمز.',
+    'logged_out' => 'تم تسجيل الخروج',
+    'account_deleted' => 'تم حذف الحساب',
 ];

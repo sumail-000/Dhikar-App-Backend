@@ -46,12 +46,12 @@ class PasswordResetController extends Controller
             ->first();
 
         if (!$row) {
-            return response()->json(['message' => __('Invalid code.')], 422);
+            return response()->json(['message' => __('messages.invalid_code')], 422);
         }
         if (Carbon::parse($row->expires_at)->isPast()) {
-            return response()->json(['message' => __('The code has expired.')], 422);
+            return response()->json(['message' => __('messages.expired_code')], 422);
         }
-        return response()->json(['message' => __('Code verified.')]);
+        return response()->json(['message' => __('messages.code_verified')]);
     }
 
     public function resetWithCode(Request $request)
@@ -68,10 +68,10 @@ class PasswordResetController extends Controller
             ->first();
 
         if (!$row) {
-            return response()->json(['message' => __('Invalid code.')], 422);
+            return response()->json(['message' => __('messages.invalid_code')], 422);
         }
         if (Carbon::parse($row->expires_at)->isPast()) {
-            return response()->json(['message' => __('The code has expired.')], 422);
+            return response()->json(['message' => __('messages.expired_code')], 422);
         }
 
         $user = User::where('email', $validated['email'])->firstOrFail();
@@ -81,6 +81,6 @@ class PasswordResetController extends Controller
         // Invalidate used code
         DB::table('password_reset_codes')->where('email', $validated['email'])->delete();
 
-        return response()->json(['message' => __('Password has been reset.')]);
+        return response()->json(['message' => __('messages.password_reset')]);
     }
 }

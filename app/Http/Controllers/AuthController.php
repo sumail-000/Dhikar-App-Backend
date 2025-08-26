@@ -17,7 +17,7 @@ class AuthController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(8)],
         ], [
-            'name.regex' => __('Username may contain only letters, numbers, and underscores.'),
+            'name.regex' => __('messages.username_invalid'),
         ]);
 
         $user = User::create([
@@ -73,7 +73,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out']);
+        return response()->json(['message' => __('messages.logged_out')]);
     }
 
     public function me(Request $request)
@@ -91,6 +91,6 @@ class AuthController extends Controller
         $user = $request->user();
         $user->tokens()->delete();
         $user->delete();
-        return response()->json(['message' => 'Account deleted']);
+        return response()->json(['message' => __('messages.account_deleted')]);
     }
 }

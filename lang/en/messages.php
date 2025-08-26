@@ -6,4 +6,7 @@ return [
     'invalid_code' => 'Invalid code.',
     'expired_code' => 'The code has expired.',
     'password_reset' => 'Password has been reset.',
+    'code_verified' => 'Code verified.',
+    'logged_out' => 'Logged out',
+    'account_deleted' => 'Account deleted',
 ];
