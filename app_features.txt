@@ -1,0 +1,113 @@
+ Login / Sign-Up Page 
+•	This page appears only when: o 	The user tries to create a group o 	 attempts to join a group 
+•	Login Option: o Username o Password • Sign-Up Option: o Username  o Email o Password 
+Home Page 
+•	Displays overall progress percentage in: o Daily Dhikr goal o Individual or group Khitma goal 
+•	Streak: an icon like   Your Current Streak: 5 Days. 
+•	Display daily motivational verse 
+ 
+ 
+ 	 
+Khitma Page 
+•	Button 1: Start a New Khitma o 	Choose the number of days to complete the khitma (e.g., 3, 4, 5, or 6 days). o 	Each option displays how many Juz' should be read daily. 
+o	reminders are automatically handled by the app. 
+•	Button 2: Start Daily Werd 
+o	A text box where the user enters the number of pages they wish to read per day. 
+o	A list of all Qur'anic Surahs, allowing the user to select which one they want to read daily. 
+o	reminders are automatically handled by the app. 
+•	Button 3: Groups o 	Navigates to the Group Khitma page where: 
+▪	The user can view groups they are part of. 
+▪	A button to Create a New Group is also available. 
+ 
+ Create New Group Page 
+•	Group Name: Entered in a text box. 
+•	Group Goal: Selected using the same interface as “Start a New Khitma”. 
+•	Number of members: Entered in a text box. 
+•	Once the group is created: 
+o	The group page is initially empty. 
+o	Members are added via an invite link (placement to be defined later). 
+ 
+ 	 
+ 
+           Group Main Page  Admin View: 
+•	Button 1: Auto Assign Juz’ o 	Automatically distributes Juz’ 1–30 sequentially among group members. 
+•	Button 2 : Manual Assignment o 	Displays a list of the group members. o 	Next to each name, a dropdown menu (1–30) to assign a Juz’. 
+o	A (+), displays another dropdown menu allows the admin to assign multiple Juz’ to one member. 
+ Member View (non-admin): 
+•	The page is empty until the admin assigns Juz’. 
+•	Once assigned, a table is displayed showing: 
+o	Member names o 	Assigned Juz’ o 	Status of juz’: editable by the member using a text box to indicate: 
+▪	Completed 
+▪	Not completed 
+▪	Number of pages read 
+ Group Info Page 
+•	Displays: 
+o	Total number of group members o Names of all members 
+•	Admin functionality: 
+o	Tap on a member’s name to reveal a Remove Member button o 	Send Reminder Button to remind members of their assignments 
+•	Additional features: 
+o	Group Invite Link for adding new members
+Dhikr Page 
+Function: Allows users to perform personal or group dhikr with goal tracking. 
+Content: 
+•	Select Dhikr Type (Dropdown menu): 
+o	Option 1: Istighfar (استغفار) o 	Option 2: Salat on the Prophet (صلاة على النبي) o 	Option 3: Tasbih (تسبيح) o 	Option 4: Custom — when selected, a text box appears to enter a personalized dhikr. 
+ 
+•	Target Count: 
+o	Text box to enter the number of repetitions the user wants to complete. 
+o	reminders are automatically handled by the app. 
+•	Groups Button: 
+o	Navigates to the Dhikr Groups Page. 
+ 
+Dhikr Groups Page 
+Function: Displays all dhikr groups the user has joined, and allows creating a new one. 
+Content: 
+•	List of joined groups (group names + small summary of progress). 
+•	Create New Group button. 
+ 	 
+Create Dhikr Group Page 
+Function: Allows users to start a new dhikr group.
+Content: 
+•	Group Name: Text box to enter name. 
+•	Dhikr Type: Same dropdown menu as in the personal dhikr page. 
+•	Target Goal: Text box to enter target number (e.g., 10,000). 
+ 
+Dhikr Group Detail Page 
+Function: Displays progress of the group and allows members to contribute. 
+Content: 
+•	Shows the Dhikr Type at the middle. 
+•	Shows the Group Goal and a counter of the total progress. 
+o	Example: 0 / 10000 at the start. 
+o	As members add their counts, the number increases cumulatively. 
+•	Each member can input how many dhikr repetitions they completed via a text box. 
+o	The system adds this number to the total dynamically. 
+Visible to: All group members 
+Auto-tracking: The app sums up all inputs and displays the updated total. 
+Group Info Page 
+•	Displays: 
+o	Total number of group members o Names of all members 
+•	Admin functionality: 
+o	Tap on a member’s name to reveal a Remove Member button o 	Send Reminder Button to remind members of their assignments 
+ 
+•	Additional features: o 	Group Invite Link for adding new members
+ Notifications Page 
+Function:  View all reminders and alerts for the user. 
+•	Types of notifications: 
+o Individual reminders (e.g. daily dhikr targets, pending khitma tasks) o Group reminders (sent by group admins or automatic group updates) o Motivational or spiritual messages 
+• User actions: 
+o	Mark as read/unread 
+o	Delete notification 
+ 
+Settings Page 
+Function: Manage user account and preferences. 
+•	Account Information: o Name and email address  o Edit profile 
+•	Language and Display: o Choose app language o Select light/dark mode 
+•	Reminder Preferences: 
+o Enable or disable daily dhikr reminders o Set preferred reminder times o Set frequency for khitma reminders 
+• Group Management: o View and leave groups o Privacy & Notifications: 
+▪	Manage who can invite you to groups 
+▪	Enable/disable group notifications 
+ 
+Wered app features 
+• Account Control: 
+o Log out o Request account deletion 
