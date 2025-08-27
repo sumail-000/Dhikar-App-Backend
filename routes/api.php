@@ -30,6 +30,7 @@ Route::post('password/verify', [PasswordResetController::class, 'verifyCode']);
 Route::post('password/reset', [PasswordResetController::class, 'resetWithCode']);
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\GroupController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
@@ -40,4 +41,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::post('profile', [ProfileController::class, 'update']);
     Route::delete('profile/avatar', [ProfileController::class, 'deleteAvatar']);
+
+    // Groups
+    Route::get('groups', [GroupController::class, 'index']);
+    Route::post('groups', [GroupController::class, 'store']);
+    Route::get('groups/{id}', [GroupController::class, 'show']);
+    Route::get('groups/{id}/invite', [GroupController::class, 'getInvite']);
+    Route::post('groups/join', [GroupController::class, 'join']);
+    Route::post('groups/{id}/leave', [GroupController::class, 'leave']);
+    Route::delete('groups/{id}/members/{userId}', [GroupController::class, 'removeMember']);
+
+    // Khitma-specific
+    Route::post('groups/{id}/khitma/auto-assign', [GroupController::class, 'autoAssign']);
+    Route::post('groups/{id}/khitma/manual-assign', [GroupController::class, 'manualAssign']);
+    Route::get('groups/{id}/khitma/assignments', [GroupController::class, 'assignments']);
+    Route::patch('groups/{id}/khitma/assignment', [GroupController::class, 'updateAssignment']);
 });
