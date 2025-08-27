@@ -32,5 +32,6 @@ Route::post('password/reset', [PasswordResetController::class, 'resetWithCode'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('auth/delete/check', [AuthController::class, 'checkDeletePassword']);
     Route::delete('auth/delete', [AuthController::class, 'deleteAccount']);
 });

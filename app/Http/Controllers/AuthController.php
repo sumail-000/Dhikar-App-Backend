@@ -86,11 +86,42 @@ class AuthController extends Controller
         ]);
     }
 
+    public function checkDeletePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => __('messages.incorrect_password'),
+            ], 422);
+        }
+
+        return response()->json(['message' => __('messages.password_ok')]);
+    }
+
     public function deleteAccount(Request $request)
     {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        /** @var User $user */
         $user = $request->user();
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => __('messages.incorrect_password'),
+            ], 422);
+        }
+
         $user->tokens()->delete();
         $user->delete();
+
         return response()->json(['message' => __('messages.account_deleted')]);
     }
 }

@@ -9,4 +9,6 @@ return [
     'code_verified' => 'تم التحقق من الرمز.',
     'logged_out' => 'تم تسجيل الخروج',
     'account_deleted' => 'تم حذف الحساب',
+    'incorrect_password' => 'كلمة المرور غير صحيحة.',
+    'password_ok' => 'تم التحقق من كلمة المرور.',
 ];

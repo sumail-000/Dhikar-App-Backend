@@ -9,4 +9,6 @@ return [
     'code_verified' => 'Code verified.',
     'logged_out' => 'Logged out',
     'account_deleted' => 'Account deleted',
+    'incorrect_password' => 'Incorrect password.',
+    'password_ok' => 'Password verified.',
 ];
