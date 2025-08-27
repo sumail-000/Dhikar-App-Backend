@@ -29,9 +29,15 @@ Route::post('password/forgot', [PasswordResetController::class, 'requestReset'])
 Route::post('password/verify', [PasswordResetController::class, 'verifyCode']);
 Route::post('password/reset', [PasswordResetController::class, 'resetWithCode']);
 
+use App\Http\Controllers\ProfileController;
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete/check', [AuthController::class, 'checkDeletePassword']);
     Route::delete('auth/delete', [AuthController::class, 'deleteAccount']);
+
+    // Profile
+    Route::post('profile', [ProfileController::class, 'update']);
+    Route::delete('profile/avatar', [ProfileController::class, 'deleteAvatar']);
 });

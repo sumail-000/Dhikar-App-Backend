@@ -82,7 +82,10 @@ class AuthController extends Controller
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
+            'avatar_url' => $user->avatar_path ? url('storage/'.$user->avatar_path) : null,
+            'joined_at' => optional($user->created_at)->toISOString(),
         ]);
     }
 
