@@ -135,7 +135,6 @@ class GroupController extends Controller
             $user = $gm->user;
             return [
                 'id' => $gm->user_id,
-                'name' => optional($user)->name ?? optional($user)->username,
                 'username' => optional($user)->username,
                 'avatar_url' => ($user && $user->avatar_path) ? url('storage/'.$user->avatar_path) : null,
                 'role' => $gm->role,
@@ -404,7 +403,7 @@ class GroupController extends Controller
                 'pages_read' => $ka->pages_read,
                 'user' => $ka->user ? [
                     'id' => $ka->user->id,
-                    'name' => $ka->user->name ?? $ka->user->username,
+                    'username' => $ka->user->username,
                 ] : null,
             ];
         });

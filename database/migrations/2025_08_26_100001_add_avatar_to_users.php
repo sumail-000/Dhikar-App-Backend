@@ -11,9 +11,6 @@ return new class extends Migration {
             if (!Schema::hasColumn('users', 'avatar_path')) {
                 $table->string('avatar_path')->nullable();
             }
-            if (!Schema::hasColumn('users', 'username')) {
-                $table->string('username')->nullable()->unique();
-            }
         });
     }
 

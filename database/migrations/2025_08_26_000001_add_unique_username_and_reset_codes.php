@@ -8,14 +8,6 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'username')) {
-                $table->string('username')->nullable()->unique();
-            } else {
-                $table->unique('username');
-            }
-        });
-
         Schema::create('password_reset_codes', function (Blueprint $table) {
             $table->id();
             $table->string('email');
@@ -34,8 +26,5 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('password_reset_codes');
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique(['username']);
-        });
     }
 };
