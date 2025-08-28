@@ -44,7 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Groups
     Route::get('groups', [GroupController::class, 'index']);
-    Route::get('groups/public', [GroupController::class, 'public']);
     Route::get('groups/explore', [GroupController::class, 'explore']);
     Route::post('groups', [GroupController::class, 'store']);
     Route::get('groups/{id}', [GroupController::class, 'show']);

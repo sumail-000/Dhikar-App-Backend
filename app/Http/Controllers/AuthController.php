@@ -12,17 +12,17 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-
         $validated = $request->validate([
-'username' => ['required', 'string', 'max:255', 'regex:/^[\pL\p{Zs}]+$/u', 'unique:users,username'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9_]+$/', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(8)],
         ], [
-            'username.regex' => __('messages.username_invalid'),
+            'name.regex' => __('messages.username_invalid'),
         ]);
 
         $user = User::create([
-            'username' => $validated['username'],
+            'name' => $validated['name'],
+            'username' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
@@ -32,7 +32,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => [
                 'id' => $user->id,
-                'username' => $user->username,
+                'name' => $user->name,
                 'email' => $user->email,
             ],
             'token' => $token,
@@ -63,7 +63,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => [
                 'id' => $user->id,
-                'username' => $user->username,
+                'name' => $user->name,
                 'email' => $user->email,
             ],
             'token' => $token,
@@ -81,6 +81,7 @@ class AuthController extends Controller
         $user = $request->user();
         return response()->json([
             'id' => $user->id,
+            'name' => $user->name,
             'username' => $user->username,
             'email' => $user->email,
             'avatar_url' => $user->avatar_path ? url('storage/'.$user->avatar_path) : null,

@@ -15,44 +15,6 @@ use Illuminate\Support\Carbon;
 
 class GroupController extends Controller
 {
-    // GET /api/groups/public - list all public groups (read-only discovery)
-    public function public(Request $request)
-    {
-        $groups = Group::query()
-            ->where('is_public', true)
-            ->withCount('members')
-            ->orderByDesc('id')
-            ->get();
-
-        $data = $groups->map(function (Group $g) {
-            $summary = null;
-            if ($g->type === 'khitma') {
-                $completed = KhitmaAssignment::where('group_id', $g->id)
-                    ->where('status', 'completed')
-                    ->count();
-                $summary = [
-                    'completed_juz' => $completed,
-                    'total_juz' => 30,
-                ];
-            }
-            return [
-                'id' => $g->id,
-                'name' => $g->name,
-                'type' => $g->type,
-                'creator_id' => $g->creator_id,
-                'is_public' => (bool) $g->is_public,
-                'members_target' => $g->members_target,
-                'members_count' => $g->members_count,
-                'days_to_complete' => $g->days_to_complete,
-                'start_date' => optional($g->start_date)->toDateString(),
-                'summary' => $summary,
-                'created_at' => optional($g->created_at)->toDateTimeString(),
-            ];
-        });
-
-        return response()->json(['ok' => true, 'groups' => $data]);
-    }
-
     // GET /api/groups
     public function index(Request $request)
     {
@@ -173,6 +135,7 @@ class GroupController extends Controller
             $user = $gm->user;
             return [
                 'id' => $gm->user_id,
+                'name' => optional($user)->name ?? optional($user)->username,
                 'username' => optional($user)->username,
                 'avatar_url' => ($user && $user->avatar_path) ? url('storage/'.$user->avatar_path) : null,
                 'role' => $gm->role,
@@ -441,7 +404,7 @@ class GroupController extends Controller
                 'pages_read' => $ka->pages_read,
                 'user' => $ka->user ? [
                     'id' => $ka->user->id,
-                    'username' => $ka->user->username,
+                    'name' => $ka->user->name ?? $ka->user->username,
                 ] : null,
             ];
         });

@@ -13,7 +13,8 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-'username' => ['required','string','regex:/^[\pL\p{Zs}]+$/u', Rule::unique('users','username')->ignore($user->id)],
+'username' => ['required','string','regex:/^[\p{L}\s]+$/u', Rule::unique('users','username')->ignore($user->id)],
+            'name' => ['nullable','string','max:255'],
             'avatar' => ['nullable','image','mimes:jpeg,jpg,png','max:2048'], // 2MB
         ], [
             'username.regex' => __('messages.username_invalid'),
@@ -21,6 +22,9 @@ class ProfileController extends Controller
 
         if (isset($validated['username'])) {
             $user->username = $validated['username'];
+        }
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
         }
 
         if ($request->hasFile('avatar')) {
@@ -38,6 +42,7 @@ class ProfileController extends Controller
             'message' => __('messages.profile_updated'),
             'user' => [
                 'id' => $user->id,
+                'name' => $user->name,
                 'username' => $user->username,
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_path ? url('storage/'.$user->avatar_path) : null,
