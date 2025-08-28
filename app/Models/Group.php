@@ -15,12 +15,16 @@ class Group extends Model
         'name',
         'type', // 'khitma' | 'dhikr'
         'creator_id',
+        'members_target',
+        'is_public',
         'days_to_complete',
         'start_date',
     ];
 
     protected $casts = [
         'days_to_complete' => 'integer',
+        'members_target' => 'integer',
+        'is_public' => 'boolean',
         'start_date' => 'date',
     ];
 

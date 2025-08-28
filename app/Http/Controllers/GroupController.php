@@ -46,6 +46,9 @@ class GroupController extends Controller
                 'id' => $g->id,
                 'name' => $g->name,
                 'type' => $g->type,
+                'creator_id' => $g->creator_id,
+                'is_public' => (bool) $g->is_public,
+                'members_target' => $g->members_target,
                 'members_count' => $g->members_count,
                 'days_to_complete' => $g->days_to_complete,
                 'start_date' => optional($g->start_date)->toDateString(),
@@ -63,8 +66,10 @@ class GroupController extends Controller
         $v = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'nullable|in:khitma,dhikr',
-            'days_to_complete' => 'nullable|integer|in:3,4,5,6',
+'days_to_complete' => 'nullable|integer|min:1|max:255',
             'start_date' => 'nullable|date',
+            'members_target' => 'nullable|integer|min:1|max:100000',
+            'is_public' => 'nullable|boolean',
         ]);
         if ($v->fails()) {
             return response()->json(['ok' => false, 'errors' => $v->errors()], 422);
@@ -78,6 +83,8 @@ class GroupController extends Controller
                 'name' => $data['name'],
                 'type' => $type,
                 'creator_id' => $user->id,
+                'members_target' => $data['members_target'] ?? null,
+                'is_public' => array_key_exists('is_public', $data) ? (bool)$data['is_public'] : true,
                 'days_to_complete' => $data['days_to_complete'] ?? null,
                 'start_date' => $data['start_date'] ?? null,
             ]);
@@ -106,6 +113,9 @@ class GroupController extends Controller
             'id' => $group->id,
             'name' => $group->name,
             'type' => $group->type,
+            'creator_id' => $group->creator_id,
+            'is_public' => (bool) $group->is_public,
+            'members_target' => $group->members_target,
             'days_to_complete' => $group->days_to_complete,
             'start_date' => optional($group->start_date)->toDateString(),
         ]], 201);
@@ -122,9 +132,12 @@ class GroupController extends Controller
         }
 
         $members = $group->members->map(function (GroupMember $gm) {
+            $user = $gm->user;
             return [
                 'id' => $gm->user_id,
-                'name' => optional($gm->user)->name ?? optional($gm->user)->username,
+                'name' => optional($user)->name ?? optional($user)->username,
+                'username' => optional($user)->username,
+                'avatar_url' => ($user && $user->avatar_path) ? url('storage/'.$user->avatar_path) : null,
                 'role' => $gm->role,
             ];
         })->values();
@@ -146,6 +159,10 @@ class GroupController extends Controller
                 'id' => $group->id,
                 'name' => $group->name,
                 'type' => $group->type,
+                'creator_id' => $group->creator_id,
+                'is_public' => (bool) $group->is_public,
+                'members_target' => $group->members_target,
+                'members_count' => $group->members()->count(),
                 'days_to_complete' => $group->days_to_complete,
                 'start_date' => optional($group->start_date)->toDateString(),
                 'members' => $members,
@@ -439,6 +456,33 @@ class GroupController extends Controller
         $ka->save();
 
         return response()->json(['ok' => true]);
+    }
+
+    // GET /api/groups/explore - groups created by current user
+    public function explore(Request $request)
+    {
+        $user = $request->user();
+        $groups = Group::query()
+            ->where('creator_id', $user->id)
+            ->withCount('members')
+            ->orderByDesc('id')
+            ->get();
+
+        $data = $groups->map(function (Group $g) {
+            return [
+                'id' => $g->id,
+                'name' => $g->name,
+                'type' => $g->type,
+                'creator_id' => $g->creator_id,
+                'is_public' => (bool) $g->is_public,
+                'members_target' => $g->members_target,
+                'members_count' => $g->members_count,
+                'days_to_complete' => $g->days_to_complete,
+                'start_date' => optional($g->start_date)->toDateString(),
+            ];
+        });
+
+        return response()->json(['ok' => true, 'groups' => $data]);
     }
 
     private function isMember(Group $group, int $userId): bool
