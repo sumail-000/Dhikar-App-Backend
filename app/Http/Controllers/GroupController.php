@@ -128,7 +128,10 @@ class GroupController extends Controller
         $group = Group::with(['members.user'])->findOrFail($id);
 
         if (!$this->isMember($group, $user->id) && $group->creator_id !== $user->id) {
-            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+            if (!$group->is_public) {
+                return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+            }
+            // Allow read-only access for public groups to non-members
         }
 
         $members = $group->members->map(function (GroupMember $gm) {
@@ -136,6 +139,7 @@ class GroupController extends Controller
             return [
                 'id' => $gm->user_id,
                 'username' => optional($user)->username,
+                'email' => optional($user)->email,
                 'avatar_url' => ($user && $user->avatar_path) ? url('storage/'.$user->avatar_path) : null,
                 'role' => $gm->role,
             ];
@@ -230,6 +234,31 @@ class GroupController extends Controller
 
         GroupMember::create([
             'group_id' => $invite->group_id,
+            'user_id' => $user->id,
+            'role' => 'member',
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    // POST /api/groups/{id}/join - join public group without token
+    public function joinPublic(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        if (!$group->is_public) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $already = GroupMember::where('group_id', $group->id)
+            ->where('user_id', $user->id)
+            ->exists();
+        if ($already) {
+            return response()->json(['ok' => true, 'message' => 'Already joined']);
+        }
+
+        GroupMember::create([
+            'group_id' => $group->id,
             'user_id' => $user->id,
             'role' => 'member',
         ]);
@@ -457,12 +486,12 @@ class GroupController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    // GET /api/groups/explore - groups created by current user
+    // GET /api/groups/explore - list all public groups (for discovery)
     public function explore(Request $request)
     {
         $user = $request->user();
         $groups = Group::query()
-            ->where('creator_id', $user->id)
+            ->where('is_public', true)
             ->withCount('members')
             ->orderByDesc('id')
             ->get();

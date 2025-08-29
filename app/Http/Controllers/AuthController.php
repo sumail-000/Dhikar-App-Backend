@@ -13,11 +13,11 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-'username' => ['required', 'string', 'max:255', 'regex:/^[\p{L}\s]+$/u', 'unique:users,username'],
+            'username' => ['required', 'string', 'max:255', 'regex:/^[\p{L} ]+$/u', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(8)],
         ], [
-'username.regex' => __('messages.username_invalid'),
+            'username.regex' => __('messages.username_invalid'),
         ]);
 
         $user = User::create([

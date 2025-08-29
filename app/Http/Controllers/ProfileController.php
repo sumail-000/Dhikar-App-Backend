@@ -13,7 +13,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'username' => ['required','string','regex:/^[\p{L}\s]+$/u', Rule::unique('users','username')->ignore($user->id)],
+            'username' => ['required','string','max:255','regex:/^[\p{L} ]+$/u', Rule::unique('users','username')->ignore($user->id)],
             'avatar' => ['nullable','image','mimes:jpeg,jpg,png','max:2048'], // 2MB
         ], [
             'username.regex' => __('messages.username_invalid'),

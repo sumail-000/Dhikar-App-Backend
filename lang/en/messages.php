@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'username_invalid' => 'Username may contain only letters, numbers, and underscores.',
+    'username_invalid' => 'Username may contain only letters and spaces.',
     'reset_code_sent' => 'A reset code has been sent to your email.',
     'invalid_code' => 'Invalid code.',
     'expired_code' => 'The code has expired.',
@@ -11,4 +11,6 @@ return [
     'account_deleted' => 'Account deleted',
     'incorrect_password' => 'Incorrect password.',
     'password_ok' => 'Password verified.',
+    'profile_updated' => 'Profile updated.',
+    'avatar_deleted' => 'Avatar deleted.',
 ];
