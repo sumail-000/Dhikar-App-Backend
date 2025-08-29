@@ -183,17 +183,13 @@ class GroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
         }
 
+        // Return the most recent invite token or create a permanent one if none exists
         $existing = InviteToken::where('group_id', $group->id)
-            ->where(function ($q) {
-                $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
-            })
-            ->latest('id')
+            ->orderByDesc('id')
             ->first();
 
         if (!$existing) {
-            $expires = now()->addDays(7);
-            $existing = InviteToken::generateForGroup($group, $expires);
+            $existing = InviteToken::generateForGroup($group, null); // no expiry
         }
 
         return response()->json([
@@ -217,6 +213,9 @@ class GroupController extends Controller
         }
         $token = $v->validated()['token'];
 
+        // Normalize token: trim spaces and uppercase
+        $token = strtoupper(str_replace([' ', '\t', '\n', '\r'], '', $token));
+
         $invite = InviteToken::where('token', $token)->first();
         if (!$invite) {
             return response()->json(['ok' => false, 'error' => 'Invalid token'], 404);
@@ -238,7 +237,7 @@ class GroupController extends Controller
             'role' => 'member',
         ]);
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => true, 'group_id' => $invite->group_id]);
     }
 
     // POST /api/groups/{id}/join - join public group without token
