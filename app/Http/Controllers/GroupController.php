@@ -325,6 +325,22 @@ class GroupController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // DELETE /api/groups/{id}
+    public function destroy(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        DB::transaction(function () use ($group) {
+            $group->delete(); // cascade deletes members/invites/assignments
+        });
+
+        return response()->json(['ok' => true]);
+    }
+
     // POST /api/groups/{id}/khitma/auto-assign
     public function autoAssign(Request $request, int $id)
     {
