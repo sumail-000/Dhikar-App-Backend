@@ -31,6 +31,7 @@ Route::post('password/reset', [PasswordResetController::class, 'resetWithCode'])
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\QuranController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
@@ -53,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('groups/{id}/join', [GroupController::class, 'joinPublic']);
     Route::post('groups/{id}/leave', [GroupController::class, 'leave']);
     Route::delete('groups/{id}/members/{userId}', [GroupController::class, 'removeMember']);
+
+    // Quran Surah meta (Uthmanic Hafs)
+    Route::get('quran/surahs', [QuranController::class, 'surahs']);
 
     // Khitma-specific
     Route::post('groups/{id}/khitma/auto-assign', [GroupController::class, 'autoAssign']);
