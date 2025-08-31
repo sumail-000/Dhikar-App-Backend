@@ -66,10 +66,11 @@ class GroupController extends Controller
         $v = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'nullable|in:khitma,dhikr',
-'days_to_complete' => 'nullable|integer|min:1|max:255',
+            'days_to_complete' => 'nullable|integer|min:1|max:255',
             'start_date' => 'nullable|date',
             'members_target' => 'nullable|integer|min:1|max:100000',
             'is_public' => 'nullable|boolean',
+            'auto_assign_enabled' => 'nullable|boolean',
         ]);
         if ($v->fails()) {
             return response()->json(['ok' => false, 'errors' => $v->errors()], 422);
@@ -85,6 +86,7 @@ class GroupController extends Controller
                 'creator_id' => $user->id,
                 'members_target' => $data['members_target'] ?? null,
                 'is_public' => array_key_exists('is_public', $data) ? (bool)$data['is_public'] : true,
+                'auto_assign_enabled' => array_key_exists('auto_assign_enabled', $data) ? (bool)$data['auto_assign_enabled'] : false,
                 'days_to_complete' => $data['days_to_complete'] ?? null,
                 'start_date' => $data['start_date'] ?? null,
             ]);
@@ -231,11 +233,52 @@ class GroupController extends Controller
             return response()->json(['ok' => true, 'message' => 'Already joined']);
         }
 
-        GroupMember::create([
-            'group_id' => $invite->group_id,
-            'user_id' => $user->id,
-            'role' => 'member',
-        ]);
+        $group = Group::findOrFail($invite->group_id);
+
+        DB::transaction(function () use ($group, $user) {
+            GroupMember::create([
+                'group_id' => $group->id,
+                'user_id' => $user->id,
+                'role' => 'member',
+            ]);
+
+            // Auto-assign on join if enabled and type=khitma
+            if ($group->type === 'khitma' && $group->auto_assign_enabled) {
+                $memberIds = GroupMember::where('group_id', $group->id)
+                    ->orderBy('id')
+                    ->pluck('user_id')
+                    ->values()
+                    ->all();
+                $slots = $group->members_target ? min(max((int) $group->members_target, 1), 30) : max(count($memberIds), 1);
+                // Creator first ordering
+                $ordered = [];
+                if (in_array($group->creator_id, $memberIds, true)) $ordered[] = $group->creator_id;
+                foreach ($memberIds as $uid) if ($uid !== $group->creator_id) $ordered[] = $uid;
+
+                // Chunking (even-only)
+                $base = intdiv(30, $slots);
+                $start = 1;
+                for ($s = 0; $s < $slots; $s++) {
+                    if ($base <= 0) { break; }
+                    $count = $base;
+                    $end = $start + $count - 1;
+                    $uid = ($s < count($ordered)) ? $ordered[$s] : null;
+                    for ($j = $start; $j <= $end; $j++) {
+                        KhitmaAssignment::updateOrCreate(
+                            ['group_id' => $group->id, 'juz_number' => $j],
+                            ['user_id' => $uid, 'status' => $uid ? 'assigned' : 'unassigned']
+                        );
+                    }
+                    $start = $end + 1;
+                }
+                for ($j = $start; $j <= 30; $j++) {
+                    KhitmaAssignment::updateOrCreate(
+                        ['group_id' => $group->id, 'juz_number' => $j],
+                        ['user_id' => null, 'status' => 'unassigned']
+                    );
+                }
+            }
+        });
 
         return response()->json(['ok' => true, 'group_id' => $invite->group_id]);
     }
@@ -256,11 +299,46 @@ class GroupController extends Controller
             return response()->json(['ok' => true, 'message' => 'Already joined']);
         }
 
-        GroupMember::create([
-            'group_id' => $group->id,
-            'user_id' => $user->id,
-            'role' => 'member',
-        ]);
+        DB::transaction(function () use ($group, $user) {
+            GroupMember::create([
+                'group_id' => $group->id,
+                'user_id' => $user->id,
+                'role' => 'member',
+            ]);
+
+            if ($group->type === 'khitma' && $group->auto_assign_enabled) {
+                $memberIds = GroupMember::where('group_id', $group->id)
+                    ->orderBy('id')
+                    ->pluck('user_id')
+                    ->values()
+                    ->all();
+                $slots = $group->members_target ? min(max((int) $group->members_target, 1), 30) : max(count($memberIds), 1);
+                $ordered = [];
+                if (in_array($group->creator_id, $memberIds, true)) $ordered[] = $group->creator_id;
+                foreach ($memberIds as $uid) if ($uid !== $group->creator_id) $ordered[] = $uid;
+                $base = intdiv(30, $slots);
+                $start = 1;
+                for ($s = 0; $s < $slots; $s++) {
+                    if ($base <= 0) { break; }
+                    $count = $base;
+                    $end = $start + $count - 1;
+                    $uid = ($s < count($ordered)) ? $ordered[$s] : null;
+                    for ($j = $start; $j <= $end; $j++) {
+                        KhitmaAssignment::updateOrCreate(
+                            ['group_id' => $group->id, 'juz_number' => $j],
+                            ['user_id' => $uid, 'status' => $uid ? 'assigned' : 'unassigned']
+                        );
+                    }
+                    $start = $end + 1;
+                }
+                for ($j = $start; $j <= 30; $j++) {
+                    KhitmaAssignment::updateOrCreate(
+                        ['group_id' => $group->id, 'juz_number' => $j],
+                        ['user_id' => null, 'status' => 'unassigned']
+                    );
+                }
+            }
+        });
 
         return response()->json(['ok' => true]);
     }
@@ -353,24 +431,55 @@ class GroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
         }
 
+        // Determine target slots: prefer members_target if set (capped at 30), otherwise current member count
         $memberIds = GroupMember::where('group_id', $group->id)
-            ->orderBy('id')
+            ->orderBy('id') // join order
             ->pluck('user_id')
             ->values()
             ->all();
+
         if (empty($memberIds)) {
             return response()->json(['ok' => false, 'error' => 'No members to assign'], 400);
         }
 
-        DB::transaction(function () use ($group, $memberIds) {
-            $idx = 0;
-            for ($j = 1; $j <= 30; $j++) {
-                $uid = $memberIds[$idx % count($memberIds)];
+        $slots = $group->members_target ? min(max((int) $group->members_target, 1), 30) : max(count($memberIds), 1);
+
+        DB::transaction(function () use ($group, $memberIds, $slots) {
+            // Enable auto assign flag
+            $group->auto_assign_enabled = true;
+            $group->save();
+
+            // Build ordered users: creator first, then by join order
+            $ordered = [];
+            if (in_array($group->creator_id, $memberIds, true)) {
+                $ordered[] = $group->creator_id;
+            }
+            foreach ($memberIds as $uid) {
+                if ($uid !== $group->creator_id) $ordered[] = $uid;
+            }
+
+            // Chunk Juz 1..30 into contiguous segments per slot (even-only); leftover Juz remain unassigned
+            $base = intdiv(30, $slots);
+            $start = 1;
+            for ($s = 0; $s < $slots; $s++) {
+                if ($base <= 0) { break; }
+                $count = $base;
+                $end = $start + $count - 1;
+                $uid = ($s < count($ordered)) ? $ordered[$s] : null;
+                for ($j = $start; $j <= $end; $j++) {
+                    KhitmaAssignment::updateOrCreate(
+                        ['group_id' => $group->id, 'juz_number' => $j],
+                        ['user_id' => $uid, 'status' => $uid ? 'assigned' : 'unassigned']
+                    );
+                }
+                $start = $end + 1;
+            }
+            // Mark remaining Juz as unassigned
+            for ($j = $start; $j <= 30; $j++) {
                 KhitmaAssignment::updateOrCreate(
                     ['group_id' => $group->id, 'juz_number' => $j],
-                    ['user_id' => $uid, 'status' => 'assigned']
+                    ['user_id' => null, 'status' => 'unassigned']
                 );
-                $idx++;
             }
         });
 

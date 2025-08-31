@@ -17,6 +17,7 @@ class Group extends Model
         'creator_id',
         'members_target',
         'is_public',
+        'auto_assign_enabled',
         'days_to_complete',
         'start_date',
     ];
