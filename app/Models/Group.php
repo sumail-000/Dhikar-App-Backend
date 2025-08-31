@@ -26,6 +26,7 @@ class Group extends Model
         'days_to_complete' => 'integer',
         'members_target' => 'integer',
         'is_public' => 'boolean',
+        'auto_assign_enabled' => 'boolean',
         'start_date' => 'date',
     ];
 

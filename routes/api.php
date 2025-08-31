@@ -59,4 +59,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('groups/{id}/khitma/manual-assign', [GroupController::class, 'manualAssign']);
     Route::get('groups/{id}/khitma/assignments', [GroupController::class, 'assignments']);
     Route::patch('groups/{id}/khitma/assignment', [GroupController::class, 'updateAssignment']);
+
+    // Quran/Juz meta
+    Route::get('khitma/juz-pages', [GroupController::class, 'juzPages']);
+
+    // Quran per-page content
+    Route::get('quran/page/{page}', [GroupController::class, 'quranPage'])->whereNumber('page');
 });

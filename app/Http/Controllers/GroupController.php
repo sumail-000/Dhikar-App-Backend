@@ -7,6 +7,7 @@ use App\Models\GroupMember;
 use App\Models\InviteToken;
 use App\Models\KhitmaAssignment;
 use App\Models\User;
+use App\Models\UthmanicHafsQuranText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,7 @@ class GroupController extends Controller
                 'type' => $g->type,
                 'creator_id' => $g->creator_id,
                 'is_public' => (bool) $g->is_public,
+                'auto_assign_enabled' => (bool) $g->auto_assign_enabled,
                 'members_target' => $g->members_target,
                 'members_count' => $g->members_count,
                 'days_to_complete' => $g->days_to_complete,
@@ -166,6 +168,7 @@ class GroupController extends Controller
                 'type' => $group->type,
                 'creator_id' => $group->creator_id,
                 'is_public' => (bool) $group->is_public,
+                'auto_assign_enabled' => (bool) $group->auto_assign_enabled,
                 'members_target' => $group->members_target,
                 'members_count' => $group->members()->count(),
                 'days_to_complete' => $group->days_to_complete,
@@ -521,6 +524,10 @@ class GroupController extends Controller
         }
 
         DB::transaction(function () use ($group, $payload) {
+            // Disable future auto-assign recalculations once manual customization is applied
+            $group->auto_assign_enabled = false;
+            $group->save();
+
             foreach ($payload['assignments'] as $a) {
                 $uid = (int) $a['user_id'];
                 foreach ($a['juz_numbers'] as $jn) {
@@ -643,5 +650,92 @@ class GroupController extends Controller
         return GroupMember::where('group_id', $group->id)
             ->where('user_id', $userId)
             ->exists();
+    }
+
+    // GET /api/khitma/juz-pages
+    // Returns page ranges per Juz based on Uthmanic Hafs text (604 pages total expected)
+    public function juzPages(Request $request)
+    {
+        // No auth role requirement beyond being logged-in (same as other khitma endpoints)
+        $rows = UthmanicHafsQuranText::query()
+            ->selectRaw('jozz as juz, MIN(page) as page_start, MAX(page) as page_end')
+            ->groupBy('jozz')
+            ->orderBy('jozz')
+            ->get();
+
+        $totalPages = (int) UthmanicHafsQuranText::query()->max('page');
+
+        $data = $rows->map(function ($r) {
+            $start = (int) $r->page_start;
+            $end = (int) $r->page_end;
+            return [
+                'juz' => (int) $r->juz,
+                'page_start' => $start,
+                'page_end' => $end,
+                'pages' => max($end - $start + 1, 0),
+            ];
+        })->values();
+
+        return response()->json([
+            'ok' => true,
+            'total_pages' => $totalPages,
+            'juz_pages' => $data,
+        ]);
+    }
+
+    // GET /api/quran/page/{page}
+    // Returns all verses on a given Mushaf page (Uthmani Hafs), ordered for rendering
+    public function quranPage(Request $request, int $page)
+    {
+        if ($page <= 0) {
+            return response()->json(['ok' => false, 'error' => 'Invalid page'], 422);
+        }
+
+        $maxPage = (int) UthmanicHafsQuranText::query()->max('page');
+        if ($maxPage <= 0) {
+            return response()->json(['ok' => false, 'error' => 'Quran data not available'], 503);
+        }
+        if ($page > $maxPage) {
+            return response()->json(['ok' => false, 'error' => 'Page not found'], 404);
+        }
+
+        $rows = UthmanicHafsQuranText::query()
+            ->where('page', $page)
+            ->orderBy('sura_no')
+            ->orderBy('aya_no')
+            ->orderBy('line_start')
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return response()->json(['ok' => false, 'error' => 'Page not found'], 404);
+        }
+
+        $juzList = $rows->pluck('jozz')->unique()->sort()->values()->map(fn($j) => (int) $j)->all();
+        $primaryJuz = $juzList[0] ?? null;
+
+        $verses = $rows->map(function (UthmanicHafsQuranText $r) {
+            return [
+                'id' => (int) $r->id,
+                'juz' => (int) $r->jozz,
+                'page' => (int) $r->page,
+                'sura_no' => (int) $r->sura_no,
+                'sura_name_en' => $r->sura_name_en,
+                'sura_name_ar' => $r->sura_name_ar,
+                'aya_no' => (int) $r->aya_no,
+                'line_start' => (int) $r->line_start,
+                'line_end' => (int) $r->line_end,
+                'aya_text' => $r->aya_text,
+                'aya_text_emlaey' => $r->aya_text_emlaey,
+            ];
+        })->values();
+
+        return response()->json([
+            'ok' => true,
+            'page' => $page,
+            'juz' => $primaryJuz,
+            'juz_list' => $juzList,
+            'verses_count' => $verses->count(),
+            'verses' => $verses,
+        ]);
     }
 }
