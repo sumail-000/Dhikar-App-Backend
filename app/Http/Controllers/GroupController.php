@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use App\Models\GroupMember;
+use App\Models\GroupKhitmaProgress;
 use App\Models\InviteToken;
 use App\Models\KhitmaAssignment;
 use App\Models\User;
@@ -736,6 +737,117 @@ class GroupController extends Controller
             'juz_list' => $juzList,
             'verses_count' => $verses->count(),
             'verses' => $verses,
+        ]);
+    }
+
+    // POST /api/groups/{id}/khitma/progress
+    public function saveKhitmaProgress(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        
+        if ($group->type !== 'khitma') {
+            return response()->json(['ok' => false, 'error' => 'Invalid group type'], 400);
+        }
+        
+        if (!$this->isMember($group, $user->id) && $group->creator_id !== $user->id) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+        
+        $v = Validator::make($request->all(), [
+            'juzz_read' => 'required|integer|min:1|max:30',
+            'surah_read' => 'required|integer|min:1|max:114',
+            'page_read' => 'required|integer|min:1|max:604',
+            'start_verse' => 'nullable|integer|min:1',
+            'end_verse' => 'nullable|integer|min:1',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+        
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'errors' => $v->errors()], 422);
+        }
+        
+        $data = $v->validated();
+        
+        DB::transaction(function () use ($group, $user, $data) {
+            // Save the progress entry
+            GroupKhitmaProgress::create([
+                'group_id' => $group->id,
+                'user_id' => $user->id,
+                'reading_date' => now()->toDateString(),
+                'juzz_read' => $data['juzz_read'],
+                'surah_read' => $data['surah_read'],
+                'page_read' => $data['page_read'],
+                'start_verse' => $data['start_verse'] ?? null,
+                'end_verse' => $data['end_verse'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+            
+            // Update the corresponding khitma assignment to 'completed' if user completed their assigned Juz
+            $assignment = KhitmaAssignment::where('group_id', $group->id)
+                ->where('user_id', $user->id)
+                ->where('juz_number', $data['juzz_read'])
+                ->first();
+                
+            if ($assignment) {
+                // Check if this Juz is fully completed by checking progress records
+                $juzProgress = GroupKhitmaProgress::where('group_id', $group->id)
+                    ->where('user_id', $user->id)
+                    ->where('juzz_read', $data['juzz_read'])
+                    ->count();
+                    
+                // If user has multiple progress entries for this Juz, consider it completed
+                if ($juzProgress >= 1) {
+                    $assignment->status = 'completed';
+                    $assignment->save();
+                }
+            }
+        });
+        
+        return response()->json([
+            'ok' => true,
+            'message' => 'Progress saved successfully',
+            'progress' => [
+                'group_id' => $group->id,
+                'juzz_read' => $data['juzz_read'],
+                'surah_read' => $data['surah_read'],
+                'page_read' => $data['page_read'],
+                'reading_date' => now()->toDateString(),
+            ]
+        ]);
+    }
+    
+    // GET /api/groups/{id}/khitma/progress
+    public function getKhitmaProgress(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        
+        if ($group->type !== 'khitma') {
+            return response()->json(['ok' => false, 'error' => 'Invalid group type'], 400);
+        }
+        
+        if (!$this->isMember($group, $user->id) && $group->creator_id !== $user->id) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+        
+        $progressSummary = GroupKhitmaProgress::getGroupProgressSummary($group->id);
+        
+        return response()->json([
+            'ok' => true,
+            'group_progress' => $progressSummary
+        ]);
+    }
+    
+    // GET /api/user/group-khitma-stats
+    public function getUserGroupKhitmaStats(Request $request)
+    {
+        $user = $request->user();
+        $stats = GroupKhitmaProgress::getUserTotalGroupProgress($user->id);
+        
+        return response()->json([
+            'ok' => true,
+            'stats' => $stats
         ]);
     }
 }
