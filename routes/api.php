@@ -48,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('groups/explore', [GroupController::class, 'explore']);
     Route::post('groups', [GroupController::class, 'store']);
     Route::get('groups/{id}', [GroupController::class, 'show']);
+    Route::patch('groups/{id}', [GroupController::class, 'update']);
     Route::delete('groups/{id}', [GroupController::class, 'destroy']);
     Route::get('groups/{id}/invite', [GroupController::class, 'getInvite']);
     Route::post('groups/join', [GroupController::class, 'join']);
@@ -75,7 +76,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('khitma/juz-pages', [GroupController::class, 'juzPages']);
 
     // Quran per-page content
-    Route::get('quran/page/{page}', [GroupController::class, 'quranPage'])->whereNumber('page');
 
     // Personal Khitma endpoints
     Route::get('personal-khitma', [PersonalKhitmaController::class, 'index']);

@@ -8,7 +8,6 @@ use App\Models\GroupKhitmaProgress;
 use App\Models\InviteToken;
 use App\Models\KhitmaAssignment;
 use App\Models\User;
-use App\Models\UthmanicHafsQuranText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -423,6 +422,38 @@ class GroupController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // PATCH /api/groups/{id}
+    public function update(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'is_public' => ['required', 'boolean'],
+        ]);
+
+        $group->is_public = (bool) $data['is_public'];
+        $group->save();
+
+        return response()->json([
+            'ok' => true,
+            'group' => [
+                'id' => $group->id,
+                'name' => $group->name,
+                'type' => $group->type,
+                'creator_id' => $group->creator_id,
+                'is_public' => (bool) $group->is_public,
+                'auto_assign_enabled' => (bool) $group->auto_assign_enabled,
+                'members_target' => $group->members_target,
+                'days_to_complete' => $group->days_to_complete,
+                'start_date' => optional($group->start_date)->toDateString(),
+            ],
+        ]);
+    }
+
     // POST /api/groups/{id}/khitma/auto-assign
     public function autoAssign(Request $request, int $id)
     {
@@ -658,87 +689,31 @@ class GroupController extends Controller
     public function juzPages(Request $request)
     {
         // No auth role requirement beyond being logged-in (same as other khitma endpoints)
-        $rows = UthmanicHafsQuranText::query()
-            ->selectRaw('jozz as juz, MIN(page) as page_start, MAX(page) as page_end')
-            ->groupBy('jozz')
-            ->orderBy('jozz')
-            ->get();
-
-        $totalPages = (int) UthmanicHafsQuranText::query()->max('page');
-
-        $data = $rows->map(function ($r) {
-            $start = (int) $r->page_start;
-            $end = (int) $r->page_end;
+        // Static Mushaf page ranges per Juz (aligned with client JSON mapping)
+        $ranges = [
+            1 => [1,21], 2 => [22,41], 3 => [42,62], 4 => [63,82], 5 => [83,102], 6 => [103,122],
+            7 => [123,142], 8 => [143,162], 9 => [163,182], 10 => [183,202], 11 => [203,222], 12 => [223,242],
+            13 => [243,262], 14 => [263,282], 15 => [283,302], 16 => [303,322], 17 => [323,342], 18 => [343,362],
+            19 => [363,382], 20 => [383,402], 21 => [403,422], 22 => [423,442], 23 => [443,462], 24 => [463,482],
+            25 => [483,502], 26 => [503,522], 27 => [523,542], 28 => [543,562], 29 => [563,582], 30 => [583,604],
+        ];
+        $data = collect(range(1,30))->map(function ($juz) use ($ranges) {
+            [$start,$end] = $ranges[$juz];
             return [
-                'juz' => (int) $r->juz,
+                'juz' => $juz,
                 'page_start' => $start,
                 'page_end' => $end,
                 'pages' => max($end - $start + 1, 0),
             ];
-        })->values();
+        });
 
         return response()->json([
             'ok' => true,
-            'total_pages' => $totalPages,
+            'total_pages' => 604,
             'juz_pages' => $data,
         ]);
     }
 
-    // GET /api/quran/page/{page}
-    // Returns all verses on a given Mushaf page (Uthmani Hafs), ordered for rendering
-    public function quranPage(Request $request, int $page)
-    {
-        if ($page <= 0) {
-            return response()->json(['ok' => false, 'error' => 'Invalid page'], 422);
-        }
-
-        $maxPage = (int) UthmanicHafsQuranText::query()->max('page');
-        if ($maxPage <= 0) {
-            return response()->json(['ok' => false, 'error' => 'Quran data not available'], 503);
-        }
-        if ($page > $maxPage) {
-            return response()->json(['ok' => false, 'error' => 'Page not found'], 404);
-        }
-
-        $rows = UthmanicHafsQuranText::query()
-            ->where('page', $page)
-            ->orderBy('sura_no')
-            ->orderBy('aya_no')
-            ->orderBy('line_start')
-            ->get();
-
-        if ($rows->isEmpty()) {
-            return response()->json(['ok' => false, 'error' => 'Page not found'], 404);
-        }
-
-        $juzList = $rows->pluck('jozz')->unique()->sort()->values()->map(fn($j) => (int) $j)->all();
-        $primaryJuz = $juzList[0] ?? null;
-
-        $verses = $rows->map(function (UthmanicHafsQuranText $r) {
-            return [
-                'id' => (int) $r->id,
-                'juz' => (int) $r->jozz,
-                'page' => (int) $r->page,
-                'sura_no' => (int) $r->sura_no,
-                'sura_name_en' => $r->sura_name_en,
-                'sura_name_ar' => $r->sura_name_ar,
-                'aya_no' => (int) $r->aya_no,
-                'line_start' => (int) $r->line_start,
-                'line_end' => (int) $r->line_end,
-                'aya_text' => $r->aya_text,
-                'aya_text_emlaey' => $r->aya_text_emlaey,
-            ];
-        })->values();
-
-        return response()->json([
-            'ok' => true,
-            'page' => $page,
-            'juz' => $primaryJuz,
-            'juz_list' => $juzList,
-            'verses_count' => $verses->count(),
-            'verses' => $verses,
-        ]);
-    }
 
     // POST /api/groups/{id}/khitma/progress
     public function saveKhitmaProgress(Request $request, int $id)
@@ -783,24 +758,45 @@ class GroupController extends Controller
                 'notes' => $data['notes'] ?? null,
             ]);
             
-            // Update the corresponding khitma assignment to 'completed' if user completed their assigned Juz
+            // Update the corresponding khitma assignment progress and status based on distinct pages read
             $assignment = KhitmaAssignment::where('group_id', $group->id)
                 ->where('user_id', $user->id)
                 ->where('juz_number', $data['juzz_read'])
                 ->first();
-                
+
             if ($assignment) {
-                // Check if this Juz is fully completed by checking progress records
-                $juzProgress = GroupKhitmaProgress::where('group_id', $group->id)
+                // Count distinct pages read by this user for this Juz within the group
+                $pagesReadCount = GroupKhitmaProgress::where('group_id', $group->id)
                     ->where('user_id', $user->id)
                     ->where('juzz_read', $data['juzz_read'])
-                    ->count();
-                    
-                // If user has multiple progress entries for this Juz, consider it completed
-                if ($juzProgress >= 1) {
+                    ->distinct()
+                    ->count('page_read');
+
+                // Determine total pages for this Juz using static Mushaf page ranges
+                $ranges = [
+                    1 => [1,21], 2 => [22,41], 3 => [42,62], 4 => [63,82], 5 => [83,102], 6 => [103,122],
+                    7 => [123,142], 8 => [143,162], 9 => [163,182], 10 => [183,202], 11 => [203,222], 12 => [223,242],
+                    13 => [243,262], 14 => [263,282], 15 => [283,302], 16 => [303,322], 17 => [323,342], 18 => [343,362],
+                    19 => [363,382], 20 => [383,402], 21 => [403,422], 22 => [423,442], 23 => [443,462], 24 => [463,482],
+                    25 => [483,502], 26 => [503,522], 27 => [523,542], 28 => [543,562], 29 => [563,582], 30 => [583,604],
+                ];
+                $range = $ranges[(int)$data['juzz_read']] ?? [0, -1];
+                $totalPagesInJuz = max($range[1] - $range[0] + 1, 0);
+
+                // Persist pages_read on the assignment
+                $assignment->pages_read = $pagesReadCount;
+
+                // Update status: completed if all pages read, otherwise keep as assigned
+                if ($totalPagesInJuz > 0 && $pagesReadCount >= $totalPagesInJuz) {
                     $assignment->status = 'completed';
-                    $assignment->save();
+                } else {
+                    // Ensure it is at least marked as assigned when progress exists
+                    if ($pagesReadCount > 0 && $assignment->status === 'unassigned') {
+                        $assignment->status = 'assigned';
+                    }
                 }
+
+                $assignment->save();
             }
         });
         
