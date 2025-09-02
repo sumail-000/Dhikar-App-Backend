@@ -745,33 +745,30 @@ class GroupController extends Controller
         $data = $v->validated();
         
         DB::transaction(function () use ($group, $user, $data) {
-            // Save the progress entry
-            GroupKhitmaProgress::create([
-                'group_id' => $group->id,
-                'user_id' => $user->id,
-                'reading_date' => now()->toDateString(),
-                'juzz_read' => $data['juzz_read'],
-                'surah_read' => $data['surah_read'],
-                'page_read' => $data['page_read'],
-                'start_verse' => $data['start_verse'] ?? null,
-                'end_verse' => $data['end_verse'] ?? null,
-                'notes' => $data['notes'] ?? null,
-            ]);
+            // Upsert a single progress row per (group, user, juzz)
+            GroupKhitmaProgress::updateOrCreate(
+                [
+                    'group_id' => $group->id,
+                    'user_id' => $user->id,
+                    'juzz_read' => $data['juzz_read'],
+                ],
+                [
+                    'reading_date' => now()->toDateString(),
+                    'surah_read' => $data['surah_read'],
+                    'page_read' => $data['page_read'],
+                    'start_verse' => $data['start_verse'] ?? null,
+                    'end_verse' => $data['end_verse'] ?? null,
+                    'notes' => $data['notes'] ?? null,
+                ]
+            );
             
-            // Update the corresponding khitma assignment progress and status based on distinct pages read
+            // Update the corresponding khitma assignment progress and status based on latest page within the Juz
             $assignment = KhitmaAssignment::where('group_id', $group->id)
                 ->where('user_id', $user->id)
                 ->where('juz_number', $data['juzz_read'])
                 ->first();
 
             if ($assignment) {
-                // Count distinct pages read by this user for this Juz within the group
-                $pagesReadCount = GroupKhitmaProgress::where('group_id', $group->id)
-                    ->where('user_id', $user->id)
-                    ->where('juzz_read', $data['juzz_read'])
-                    ->distinct()
-                    ->count('page_read');
-
                 // Determine total pages for this Juz using static Mushaf page ranges
                 $ranges = [
                     1 => [1,21], 2 => [22,41], 3 => [42,62], 4 => [63,82], 5 => [83,102], 6 => [103,122],
@@ -781,17 +778,26 @@ class GroupController extends Controller
                     25 => [483,502], 26 => [503,522], 27 => [523,542], 28 => [543,562], 29 => [563,582], 30 => [583,604],
                 ];
                 $range = $ranges[(int)$data['juzz_read']] ?? [0, -1];
-                $totalPagesInJuz = max($range[1] - $range[0] + 1, 0);
+                $start = $range[0] ?? 0;
+                $end = $range[1] ?? -1;
+                $totalPagesInJuz = max($end - $start + 1, 0);
 
-                // Persist pages_read on the assignment
-                $assignment->pages_read = $pagesReadCount;
+                // Compute pages read count from latest page within this Juz (monotonic, clamped)
+                $pagesReadCount = 0;
+                if ($totalPagesInJuz > 0) {
+                    $pagesReadCount = max(0, min($totalPagesInJuz, ((int)$data['page_read']) - $start + 1));
+                }
+
+                // Persist pages_read on the assignment as a non-decreasing counter
+                $current = (int) ($assignment->pages_read ?? 0);
+                $assignment->pages_read = max($current, $pagesReadCount);
 
                 // Update status: completed if all pages read, otherwise keep as assigned
-                if ($totalPagesInJuz > 0 && $pagesReadCount >= $totalPagesInJuz) {
+                if ($totalPagesInJuz > 0 && $assignment->pages_read >= $totalPagesInJuz) {
                     $assignment->status = 'completed';
                 } else {
                     // Ensure it is at least marked as assigned when progress exists
-                    if ($pagesReadCount > 0 && $assignment->status === 'unassigned') {
+                    if ($assignment->pages_read > 0 && $assignment->status === 'unassigned') {
                         $assignment->status = 'assigned';
                     }
                 }
