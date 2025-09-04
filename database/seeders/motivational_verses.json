@@ -1,0 +1,416 @@
+[
+  {
+    "surah_name": "At-Talaq",
+    "surah_name_ar": "الطلاق",
+    "surah_number": 65,
+    "ayah_number": 3,
+    "arabic_text": "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",
+    "translation": "And whoever relies upon Allah—then He is sufficient for him.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Baqarah",
+    "surah_name_ar": "البقرة",
+    "surah_number": 2,
+    "ayah_number": 286,
+    "arabic_text": "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
+    "translation": "Allah does not burden a soul beyond that it can bear.",
+    "is_active": true
+  },
+{
+    "surah_name": "Ar-Ra'd",
+    "surah_name_ar": "الرعد",
+    "surah_number": 13,
+    "ayah_number": 28,
+    "arabic_text": "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+    "translation": "Indeed, in the remembrance of Allah do hearts find rest.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Baqarah",
+    "surah_number": 2,
+    "ayah_number": 152,
+    "arabic_text": "فَاذْكُرُونِي أَذْكُرْكُمْ",
+    "translation": "So remember Me; I will remember you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Anfal",
+    "surah_name_ar": "الأنفال",
+    "surah_number": 8,
+    "ayah_number": 70,
+    "arabic_text": "إِنَّ اللَّهَ غَفُورٌ رَحِيمٌ",
+    "translation": "Indeed, Allah is Forgiving and Merciful.",
+    "is_active": true
+  },
+    {
+    "surah_name": "Ash-Sharh",
+    "surah_name_ar": "الشرح",
+    "surah_number": 94,
+    "ayah_number": 6,
+    "arabic_text": "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    "translation": "Indeed, with hardship comes ease.",
+    "is_active": true
+  },
+    {
+    "surah_name": "Tā-Hā",
+    "surah_name_ar": "طه",
+    "surah_number": 20,
+    "ayah_number": 46,
+    "arabic_text": "قَالَ لَا تَخَافَآ ۖ إِنَّنِي مَعَكُمَآ أَسْمَعُ وَأَرَىٰ",
+    "translation": "Do not fear; indeed, I am with you, hearing and seeing.",
+    "is_active": true
+  },
+{
+    "surah_name": "An-Nasr",
+    "surah_name_ar": "النصر",
+    "surah_number": 110,
+    "ayah_number": 1,
+    "arabic_text": "إِذَا جَاءَ نَصْرُ ٱللَّهِ وَالْفَتْحُ",
+    "translation": "When the help of Allah and victory come.",
+    "is_active": true
+  },
+    {
+    "surah_name": "Al-Duha",
+    "surah_name_ar": "الضحى",
+    "surah_number": 93,
+    "ayah_number": 7,
+    "arabic_text": "وَوَجَدَكَ ضَالًّا فَهَدَى",
+    "translation": "And He found you lost and guided [you].",
+    "is_active": true
+  },
+    {
+    "surah_name": "Al-Hajj",
+    "surah_name_ar": "الحج",
+    "surah_number": 22,
+    "ayah_number": 38,
+    "arabic_text": "إِنَّ اللَّهَ يُدَافِعُ عَنِ الَّذِينَ آمَنُوا",
+    "translation": "Indeed, Allah defends those who believe.",
+    "is_active": true
+  },
+    {
+    "surah_name": "Al-Baqarah",
+    "surah_name_ar": "البقرة",
+    "surah_number": 2,
+    "ayah_number": 45,
+    "arabic_text": "وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",
+    "translation": "Seek help through patience and prayer.",
+    "is_active": true
+  },
+  {
+    "surah_name": "At-Talaq",
+    "surah_name_ar": "الطلاق",
+    "surah_number": 65,
+    "ayah_number": 2,
+    "arabic_text": "وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا",
+    "translation": "And whoever fears Allah—He will make for him a way out.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ali 'Imran",
+    "surah_name_ar": "آل عمران",
+    "surah_number": 3,
+    "ayah_number": 139,
+    "arabic_text": "وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ إِن كُنتُم مُّؤْمِنِينَ",
+    "translation": "Do not weaken and do not grieve; you will be superior if you are believers.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ali 'Imran",
+    "surah_name_ar": "آل عمران",
+    "surah_number": 3,
+    "ayah_number": 160,
+    "arabic_text": "إِن يَنصُرْكُمُ اللَّهُ فَلَا غَالِبَ لَكُمْ",
+    "translation": "If Allah supports you, none can overcome you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ibrahim",
+    "surah_name_ar": "إبراهيم",
+    "surah_number": 14,
+    "ayah_number": 7,
+    "arabic_text": "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ",
+    "translation": "If you are grateful, I will surely increase you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ghafir (Al-Mu'min)",
+    "surah_name_ar": "غافر",
+    "surah_number": 40,
+    "ayah_number": 60,
+    "arabic_text": "ادْعُونِي أَسْتَجِبْ لَكُمْ",
+    "translation": "Call upon Me; I will respond to you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ash-Sharh (Al-Inshirah)",
+    "surah_name_ar": "الشرح",
+    "surah_number": 94,
+    "ayah_number": 5,
+    "arabic_text": "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    "translation": "For indeed, with hardship comes ease.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Baqarah",
+    "surah_name_ar": "البقرة",
+    "surah_number": 2,
+    "ayah_number": 153,
+    "arabic_text": "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",
+    "translation": "O you who have believed, seek help through patience and prayer.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Muhammad",
+    "surah_name_ar": "محمد",
+    "surah_number": 47,
+    "ayah_number": 7,
+    "arabic_text": "إِن تَنصُرُوا اللَّهَ يَنصُرْكُمْ",
+    "translation": "If you support Allah, He will support you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "At-Tawbah",
+    "surah_name_ar": "التوبة",
+    "surah_number": 9,
+    "ayah_number": 51,
+    "arabic_text": "قُل لَّن يُصِيبَنَا إِلَّا مَا كَتَبَ اللَّهُ لَنَا",
+    "translation": "Say, 'Never will we be struck except by what Allah has decreed for us.'",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Ankabut",
+    "surah_name_ar": "العنكبوت",
+    "surah_number": 29,
+    "ayah_number": 69,
+    "arabic_text": "وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا",
+    "translation": "Those who strive for Us—We will surely guide them to Our ways.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-A'la",
+    "surah_name_ar": "الأعلى",
+    "surah_number": 87,
+    "ayah_number": 14,
+    "arabic_text": "قَدْ أَفْلَحَ مَن تَزَكَّى",
+    "translation": "He has certainly succeeded who purifies himself.",
+    "is_active": true
+  },
+  {
+    "surah_name": "At-Talaq",
+    "surah_name_ar": "الطلاق",
+    "surah_number": 65,
+    "ayah_number": 7,
+    "arabic_text": "سَيَجْعَلُ اللَّهُ بَعْدَ عُسْرٍ يُسْرًا",
+    "translation": "Allah will bring about, after hardship, ease.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Isra",
+    "surah_name_ar": "الإسراء",
+    "surah_number": 17,
+    "ayah_number": 82,
+    "arabic_text": "وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ لِّلْمُؤْمِنِينَ",
+    "translation": "We send down of the Qur'an that which is healing and mercy for the believers.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Anbiya",
+    "surah_name_ar": "الأنبياء",
+    "surah_number": 21,
+    "ayah_number": 87,
+    "arabic_text": "لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ",
+    "translation": "There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Fajr",
+    "surah_name_ar": "الفجر",
+    "surah_number": 89,
+    "ayah_number": 27,
+    "arabic_text": "يَا أَيَّتُهَا النَّفْسُ الْمُطْمَئِنَّةُ",
+    "translation": "O reassured soul,",
+    "is_active": true
+  },
+  {
+    "surah_name": "Yusuf",
+    "surah_name_ar": "يوسف",
+    "surah_number": 12,
+    "ayah_number": 87,
+    "arabic_text": "لَا تَيْأَسُوا مِنْ رَوْحِ اللَّهِ",
+    "translation": "Do not despair of relief from Allah.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Az-Zumar",
+    "surah_name_ar": "الزمر",
+    "surah_number": 39,
+    "ayah_number": 53,
+    "arabic_text": "لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ",
+    "translation": "Do not despair of the mercy of Allah.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ad-Duha",
+    "surah_name_ar": "الضحى",
+    "surah_number": 93,
+    "ayah_number": 5,
+    "arabic_text": "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",
+    "translation": "And your Lord is going to give you, and you will be satisfied.",
+    "is_active": true
+  },
+  {
+    "surah_name": "At-Tawbah",
+    "surah_name_ar": "التوبة",
+    "surah_number": 9,
+    "ayah_number": 40,
+    "arabic_text": "لَا تَحْزَنْ إِنَّ اللَّهَ مَعَنَا",
+    "translation": "Do not grieve; indeed, Allah is with us.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Fath",
+    "surah_name_ar": "الفتح",
+    "surah_number": 48,
+    "ayah_number": 4,
+    "arabic_text": "هُوَ الَّذِي أَنْزَلَ السَّكِينَةَ فِي قُلُوبِ الْمُؤْمِنِينَ",
+    "translation": "It is He who sent down tranquility into the hearts of the believers.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ali 'Imran",
+    "surah_name_ar": "آل عمران",
+    "surah_number": 3,
+    "ayah_number": 173,
+    "arabic_text": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+    "translation": "Sufficient for us is Allah, and [He is] the best Disposer of affairs.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Mujadila",
+    "surah_name_ar": "المجادلة",
+    "surah_number": 58,
+    "ayah_number": 11,
+    "arabic_text": "يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ",
+    "translation": "Allah will raise those who have believed among you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Ma'idah",
+    "surah_name_ar": "المائدة",
+    "surah_number": 5,
+    "ayah_number": 8,
+    "arabic_text": "اعْدِلُوا هُوَ أَقْرَبُ لِلتَّقْوَىٰ",
+    "translation": "Be just; that is nearer to righteousness.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Anfal",
+    "surah_name_ar": "الأنفال",
+    "surah_number": 8,
+    "ayah_number": 46,
+    "arabic_text": "وَاصْبِرُوا إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+    "translation": "And be patient. Indeed, Allah is with the patient.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ibrahim",
+    "surah_name_ar": "إبراهيم",
+    "surah_number": 14,
+    "ayah_number": 27,
+    "arabic_text": "يُثَبِّتُ اللَّهُ الَّذِينَ آمَنُوا",
+    "translation": "Allah keeps firm those who believe.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Az-Zumar",
+    "surah_name_ar": "الزمر",
+    "surah_number": 39,
+    "ayah_number": 10,
+    "arabic_text": "إِنَّمَا يُوَفَّى الصَّابِرُونَ أَجْرَهُم بِغَيْرِ حِسَابٍ",
+    "translation": "Indeed, the patient will be given their reward without account.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ali 'Imran",
+    "surah_name_ar": "آل عمران",
+    "surah_number": 3,
+    "ayah_number": 200,
+    "arabic_text": "يَا أَيُّهَا الَّذِينَ آمَنُوا اصْبِرُوا وَصَابِرُوا وَرَابِطُوا وَاتَّقُوا اللَّهَ لَعَلَّكُمْ تُفْلِحُونَ",
+    "translation": "O you who have believed, persevere and endure and remain steadfast and fear Allah that you may succeed.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Yusuf",
+    "surah_name_ar": "يوسف",
+    "surah_number": 12,
+    "ayah_number": 90,
+    "arabic_text": "إِنَّهُ مَن يَتَّقِ وَيَصْبِرْ فَإِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ",
+    "translation": "Indeed, whoever fears Allah and is patient—then indeed, Allah does not allow to be lost the reward of the doers of good.",
+    "is_active": true
+  },
+  {
+    "surah_name": "At-Taghabun",
+    "surah_name_ar": "التغابن",
+    "surah_number": 64,
+    "ayah_number": 11,
+    "arabic_text": "وَمَن يُؤْمِنْ بِاللَّهِ يَهْدِ قَلْبَهُ",
+    "translation": "And whoever believes in Allah—He guides his heart.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Ash-Shura",
+    "surah_name_ar": "الشورى",
+    "surah_number": 42,
+    "ayah_number": 36,
+    "arabic_text": "وَمَا عِندَ اللَّهِ خَيْرٌ وَأَبْقَى",
+    "translation": "What is with Allah is better and more lasting.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Ankabut",
+    "surah_name_ar": "العنكبوت",
+    "surah_number": 29,
+    "ayah_number": 60,
+    "arabic_text": "اللَّهُ يَرْزُقُهَا وَإِيَّاكُمْ",
+    "translation": "Allah provides for them and for you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Adh-Dhariyat",
+    "surah_name_ar": "الذاريات",
+    "surah_number": 51,
+    "ayah_number": 22,
+    "arabic_text": "وَفِي السَّمَاءِ رِزْقُكُمْ وَمَا تُوعَدُونَ",
+    "translation": "And in the heaven is your provision and that which you are promised.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Baqarah",
+    "surah_name_ar": "البقرة",
+    "surah_number": 2,
+    "ayah_number": 216,
+    "arabic_text": "وَعَسَى أَنْ تَكْرَهُوا شَيْئًا وَهُوَ خَيْرٌ لَّكُمْ",
+    "translation": "Perhaps you dislike a thing and it is good for you.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Ahqaf",
+    "surah_name_ar": "الأحقاف",
+    "surah_number": 46,
+    "ayah_number": 13,
+    "arabic_text": "إِنَّ الَّذِينَ قَالُوا رَبُّنَا اللَّهُ ثُمَّ اسْتَقَامُوا فَلَا خَوْفٌ عَلَيْهِمْ وَلَا هُمْ يَحْزَنُونَ",
+    "translation": "Indeed, those who say, 'Our Lord is Allah' and then remain steadfast—there will be no fear concerning them, nor will they grieve.",
+    "is_active": true
+  },
+  {
+    "surah_name": "Al-Kahf",
+    "surah_name_ar": "الكهف",
+    "surah_number": 18,
+    "ayah_number": 10,
+    "arabic_text": "رَبَّنَا آتِنَا مِن لَّدُنكَ رَحْمَةً وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًا",
+    "translation": "Our Lord, grant us mercy from Yourself and prepare for us right guidance in our affair.",
+    "is_active": true
+  }
+]
+

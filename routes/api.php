@@ -32,6 +32,11 @@ Route::post('password/reset', [PasswordResetController::class, 'resetWithCode'])
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\CustomDhikrController;
+use App\Http\Controllers\DhikrGroupController;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\StreakController;
+use App\Http\Controllers\MotivationController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
@@ -43,7 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('profile', [ProfileController::class, 'update']);
     Route::delete('profile/avatar', [ProfileController::class, 'deleteAvatar']);
 
-    // Groups
+    // Groups (Khitma)
     Route::get('groups', [GroupController::class, 'index']);
     Route::get('groups/explore', [GroupController::class, 'explore']);
     Route::post('groups', [GroupController::class, 'store']);
@@ -55,6 +60,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('groups/{id}/join', [GroupController::class, 'joinPublic']);
     Route::post('groups/{id}/leave', [GroupController::class, 'leave']);
     Route::delete('groups/{id}/members/{userId}', [GroupController::class, 'removeMember']);
+
+    // Dhikr Groups
+    Route::get('dhikr-groups', [DhikrGroupController::class, 'index']);
+    Route::get('dhikr-groups/explore', [DhikrGroupController::class, 'explore']);
+    Route::post('dhikr-groups', [DhikrGroupController::class, 'store']);
+    Route::get('dhikr-groups/{id}', [DhikrGroupController::class, 'show']);
+    Route::patch('dhikr-groups/{id}', [DhikrGroupController::class, 'update']);
+    Route::delete('dhikr-groups/{id}', [DhikrGroupController::class, 'destroy']);
+    Route::get('dhikr-groups/{id}/invite', [DhikrGroupController::class, 'getInvite']);
+    Route::post('dhikr-groups/join', [DhikrGroupController::class, 'join']);
+    Route::post('dhikr-groups/{id}/join', [DhikrGroupController::class, 'joinPublic']);
+    Route::post('dhikr-groups/{id}/leave', [DhikrGroupController::class, 'leave']);
+    Route::post('dhikr-groups/{id}/progress', [DhikrGroupController::class, 'saveProgress']);
+    Route::get('dhikr-groups/{id}/progress', [DhikrGroupController::class, 'getProgress']);
+    Route::delete('dhikr-groups/{id}/members/{userId}', [DhikrGroupController::class, 'removeMember']);
 
     // Quran Surah meta (Uthmanic Hafs) - handled by GroupController for now
     // Route::get('quran/surahs', [QuranController::class, 'surahs']);
@@ -72,10 +92,26 @@ Route::middleware('auth:sanctum')->group(function () {
     // User group khitma statistics
     Route::get('user/group-khitma-stats', [GroupController::class, 'getUserGroupKhitmaStats']);
 
+    // Custom Dhikr (per-user)
+    Route::get('custom-dhikr', [CustomDhikrController::class, 'index']);
+    Route::post('custom-dhikr', [CustomDhikrController::class, 'store']);
+    Route::patch('custom-dhikr/{id}', [CustomDhikrController::class, 'update']);
+    Route::delete('custom-dhikr/{id}', [CustomDhikrController::class, 'destroy']);
+
     // Quran/Juz meta
     Route::get('khitma/juz-pages', [GroupController::class, 'juzPages']);
 
     // Quran per-page content
+
+    // Activity ping (app open)
+    Route::post('activity/ping', [ActivityController::class, 'ping']);
+    Route::post('activity/reading', [ActivityController::class, 'reading']);
+
+    // Streak
+    Route::get('streak', [StreakController::class, 'get']);
+
+    // Motivational verse
+    Route::get('motivation', [MotivationController::class, 'today']);
 
     // Personal Khitma endpoints
     Route::get('personal-khitma', [PersonalKhitmaController::class, 'index']);
