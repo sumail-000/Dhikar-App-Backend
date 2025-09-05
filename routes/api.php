@@ -37,6 +37,8 @@ use App\Http\Controllers\DhikrGroupController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\StreakController;
 use App\Http\Controllers\MotivationController;
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\NotificationController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
@@ -76,6 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dhikr-groups/{id}/progress', [DhikrGroupController::class, 'getProgress']);
     Route::delete('dhikr-groups/{id}/members/{userId}', [DhikrGroupController::class, 'removeMember']);
 
+    // Dhikr group admin reminders
+    Route::post('dhikr-groups/{id}/reminders', [DhikrGroupController::class, 'sendReminder']);
+    Route::post('dhikr-groups/{id}/reminders/member', [DhikrGroupController::class, 'sendMemberReminder']);
+
     // Quran Surah meta (Uthmanic Hafs) - handled by GroupController for now
     // Route::get('quran/surahs', [QuranController::class, 'surahs']);
 
@@ -91,6 +97,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // User group khitma statistics
     Route::get('user/group-khitma-stats', [GroupController::class, 'getUserGroupKhitmaStats']);
+
+    // Group admin reminders
+    Route::post('groups/{id}/reminders', [GroupController::class, 'sendReminder']);
+    Route::post('groups/{id}/reminders/member', [GroupController::class, 'sendMemberReminder']);
 
     // Custom Dhikr (per-user)
     Route::get('custom-dhikr', [CustomDhikrController::class, 'index']);
@@ -112,6 +122,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Motivational verse
     Route::get('motivation', [MotivationController::class, 'today']);
+
+    // Device tokens (FCM)
+    Route::post('devices/register', [DeviceController::class, 'register']);
+    Route::post('devices/unregister', [DeviceController::class, 'unregister']);
+
+    // In-app notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 
     // Personal Khitma endpoints
     Route::get('personal-khitma', [PersonalKhitmaController::class, 'index']);

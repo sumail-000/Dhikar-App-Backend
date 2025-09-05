@@ -13,7 +13,8 @@ class StreakController extends Controller
     public function get(Request $request)
     {
         $user = $request->user();
-        $today = Carbon::today();
+        $tz = $user->timezone ?: 'UTC';
+        $today = Carbon::now($tz)->startOfDay();
         $todayStr = $today->toDateString();
 
         // Today open
@@ -60,7 +61,7 @@ class StreakController extends Controller
             );
         }
 
-        $uniqueDates = $dates->map(fn($d) => Carbon::parse($d)->toDateString())->unique()->sort()->values();
+        $uniqueDates = $dates->map(fn($d) => Carbon::parse($d, $tz)->toDateString())->unique()->sort()->values();
 
         $hasReadingOn = function (Carbon $day) use ($uniqueDates): bool {
             return $uniqueDates->contains($day->toDateString());

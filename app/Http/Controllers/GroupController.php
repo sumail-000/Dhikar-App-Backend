@@ -852,4 +852,102 @@ class GroupController extends Controller
             'stats' => $stats
         ]);
     }
+
+    // POST /api/groups/{id}/reminders - send reminder to group members (admin only)
+    public function sendReminder(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $payload = $request->validate([
+            'message' => ['nullable','string','max:500'],
+        ]);
+        $message = $payload['message'] ?? 'Reminder: Please update your assigned Juz progress.';
+
+        // Collect target users (members except the sender is okay to include; keep simple)
+        $memberIds = GroupMember::where('group_id', $group->id)
+            ->pluck('user_id')->values()->all();
+
+        // Map to device tokens
+        $tokens = \App\Models\DeviceToken::whereIn('user_id', $memberIds)
+            ->pluck('device_token')->values()->all();
+
+        // Create in-app notifications
+        foreach ($memberIds as $uid) {
+            \App\Models\AppNotification::create([
+                'user_id' => $uid,
+                'type' => 'group_khitma_reminder',
+                'title' => 'Khitma Group Reminder',
+                'body' => $message,
+                'data' => [
+                    'group_id' => $group->id,
+                    'group_name' => $group->name,
+                ],
+            ]);
+        }
+
+        // Dispatch push notifications (queued)
+        if (!empty($tokens)) {
+            \App\Jobs\SendPushNotification::dispatch(
+                $tokens,
+                'Khitma Group Reminder',
+                $message,
+                ['group_id' => $group->id, 'type' => 'group_khitma_reminder']
+            );
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    // POST /api/groups/{id}/reminders/member - send reminder to a single member (admin only)
+    public function sendMemberReminder(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = Group::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $payload = $request->validate([
+            'user_id' => ['required','integer','exists:users,id'],
+            'message' => ['nullable','string','max:500'],
+        ]);
+        $targetUserId = (int) $payload['user_id'];
+        $message = $payload['message'] ?? 'Reminder: Please update your assigned Juz progress.';
+
+        // Ensure target is member of the group
+        $isMember = GroupMember::where('group_id', $group->id)->where('user_id', $targetUserId)->exists();
+        if (!$isMember && $group->creator_id !== $targetUserId) {
+            return response()->json(['ok' => false, 'error' => 'User is not a member of this group'], 422);
+        }
+
+        // Create in-app notification
+        \App\Models\AppNotification::create([
+            'user_id' => $targetUserId,
+            'type' => 'group_khitma_reminder',
+            'title' => 'Khitma Group Reminder',
+            'body' => $message,
+            'data' => [
+                'group_id' => $group->id,
+                'group_name' => $group->name,
+                'target_user_id' => $targetUserId,
+            ],
+        ]);
+
+        // Push to user's devices
+        $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+        if (!empty($tokens)) {
+            \App\Jobs\SendPushNotification::dispatch(
+                $tokens,
+                'Khitma Group Reminder',
+                $message,
+                ['group_id' => $group->id, 'type' => 'group_khitma_reminder', 'target_user_id' => $targetUserId]
+            );
+        }
+
+        return response()->json(['ok' => true]);
+    }
 }

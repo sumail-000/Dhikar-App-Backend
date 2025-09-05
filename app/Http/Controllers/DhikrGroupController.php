@@ -457,5 +457,98 @@ class DhikrGroupController extends Controller
             ->where('user_id', $userId)
             ->exists();
     }
-}
 
+    // POST /api/dhikr-groups/{id}/reminders - send reminder to dhikr group members (admin only)
+    public function sendReminder(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = DhikrGroup::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $payload = $request->validate([
+            'message' => ['nullable','string','max:500'],
+        ]);
+        $message = $payload['message'] ?? 'Reminder: Kindly contribute to the group dhikr goal.';
+
+        $memberIds = DhikrGroupMember::where('dhikr_group_id', $group->id)
+            ->pluck('user_id')->values()->all();
+
+        $tokens = \App\Models\DeviceToken::whereIn('user_id', $memberIds)
+            ->pluck('device_token')->values()->all();
+
+        foreach ($memberIds as $uid) {
+            \App\Models\AppNotification::create([
+                'user_id' => $uid,
+                'type' => 'dhikr_group_reminder',
+                'title' => 'Dhikr Group Reminder',
+                'body' => $message,
+                'data' => [
+                    'dhikr_group_id' => $group->id,
+                    'group_name' => $group->name,
+                ],
+            ]);
+        }
+
+        if (!empty($tokens)) {
+            \App\Jobs\SendPushNotification::dispatch(
+                $tokens,
+                'Dhikr Group Reminder',
+                $message,
+                ['dhikr_group_id' => $group->id, 'type' => 'dhikr_group_reminder']
+            );
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    // POST /api/dhikr-groups/{id}/reminders/member - send reminder to a single member (admin only)
+    public function sendMemberReminder(Request $request, int $id)
+    {
+        $user = $request->user();
+        $group = DhikrGroup::findOrFail($id);
+        if (!$group->isAdmin($user)) {
+            return response()->json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $payload = $request->validate([
+            'user_id' => ['required','integer','exists:users,id'],
+            'message' => ['nullable','string','max:500'],
+        ]);
+        $targetUserId = (int) $payload['user_id'];
+        $message = $payload['message'] ?? 'Reminder: Kindly contribute to the group dhikr goal.';
+
+        // Ensure target is member of the group
+        $isMember = DhikrGroupMember::where('dhikr_group_id', $group->id)->where('user_id', $targetUserId)->exists();
+        if (!$isMember && $group->creator_id !== $targetUserId) {
+            return response()->json(['ok' => false, 'error' => 'User is not a member of this group'], 422);
+        }
+
+        // In-app notification
+        \App\Models\AppNotification::create([
+            'user_id' => $targetUserId,
+            'type' => 'dhikr_group_reminder',
+            'title' => 'Dhikr Group Reminder',
+            'body' => $message,
+            'data' => [
+                'dhikr_group_id' => $group->id,
+                'group_name' => $group->name,
+                'target_user_id' => $targetUserId,
+            ],
+        ]);
+
+        // Push to user's devices
+        $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+        if (!empty($tokens)) {
+            \App\Jobs\SendPushNotification::dispatch(
+                $tokens,
+                'Dhikr Group Reminder',
+                $message,
+                ['dhikr_group_id' => $group->id, 'type' => 'dhikr_group_reminder', 'target_user_id' => $targetUserId]
+            );
+        }
+
+        return response()->json(['ok' => true]);
+    }
+}
