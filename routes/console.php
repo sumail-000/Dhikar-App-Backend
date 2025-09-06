@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 use App\Jobs\SendDailyMotivationalVerse;
 use App\Jobs\AssignDailyMotivationalVerses;
 use App\Jobs\ProcessTimezoneMotivationalVerses;
+use App\Jobs\ProcessTimezonePersonalDhikrReminder;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -34,6 +35,13 @@ Schedule::job(new ProcessTimezoneMotivationalVerses('00', 'assign'))
 Schedule::job(new ProcessTimezoneMotivationalVerses('09', 'notify'))
     ->everyFiveMinutes()
     ->name('timezone-aware-9am-notifications')
+    ->withoutOverlapping(5)
+    ->onOneServer();
+
+// Every 5 minutes, check for timezones where it's 6 PM (18:00) for personal dhikr/wered reminder
+Schedule::job(new ProcessTimezonePersonalDhikrReminder('18'))
+    ->everyFiveMinutes()
+    ->name('timezone-aware-6pm-personal-reminders')
     ->withoutOverlapping(5)
     ->onOneServer();
 
