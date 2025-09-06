@@ -6,12 +6,14 @@ use App\Models\DhikrGroup;
 use App\Models\DhikrGroupMember;
 use App\Models\DhikrInviteToken;
 use App\Models\User;
+use App\Traits\PersonalizedReminderTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class DhikrGroupController extends Controller
 {
+    use PersonalizedReminderTrait;
     // GET /api/dhikr-groups
     public function index(Request $request)
     {
@@ -517,7 +519,7 @@ class DhikrGroupController extends Controller
             'message' => ['nullable','string','max:500'],
         ]);
         $targetUserId = (int) $payload['user_id'];
-        $message = $payload['message'] ?? 'Reminder: Kindly contribute to the group dhikr goal.';
+        $customMessage = $payload['message'] ?? null;
 
         // Ensure target is member of the group
         $isMember = DhikrGroupMember::where('dhikr_group_id', $group->id)->where('user_id', $targetUserId)->exists();
@@ -525,30 +527,62 @@ class DhikrGroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'User is not a member of this group'], 422);
         }
 
-        // In-app notification
-        \App\Models\AppNotification::create([
-            'user_id' => $targetUserId,
-            'type' => 'dhikr_group_reminder',
-            'title' => 'Dhikr Group Reminder',
-            'body' => $message,
-            'data' => [
-                'dhikr_group_id' => $group->id,
-                'group_name' => $group->name,
-                'target_user_id' => $targetUserId,
-            ],
-        ]);
-
-        // Push to user's devices
-        $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
-        if (!empty($tokens)) {
-            \App\Jobs\SendPushNotification::dispatch(
-                $tokens,
-                'Dhikr Group Reminder',
-                $message,
-                ['dhikr_group_id' => $group->id, 'type' => 'dhikr_group_reminder', 'target_user_id' => $targetUserId]
-            );
+        // Get target user safely
+        $targetUser = $this->getUserSafely($targetUserId);
+        if (!$targetUser) {
+            return response()->json(['ok' => false, 'error' => 'Target user not found'], 404);
         }
 
-        return response()->json(['ok' => true]);
+        // Generate personalized reminder message
+        try {
+            $reminderData = $this->generateDhikrReminderMessage($targetUser, $group, $customMessage);
+            $message = $reminderData['message'];
+            $title = $reminderData['title'];
+        } catch (\Exception $e) {
+            \Log::error('Error generating personalized dhikr reminder message: ' . $e->getMessage());
+            // Fallback to simple message if personalization fails
+            $firstName = $this->getFirstName($targetUser->username ?? 'Friend');
+            $message = "Salam {$firstName}! Please check your dhikr group participation.";
+            $title = "Dhikr Group Reminder - {$group->name}";
+        }
+
+        // Create in-app notification with personalized message
+        try {
+            \App\Models\AppNotification::create([
+                'user_id' => $targetUserId,
+                'type' => 'dhikr_group_reminder',
+                'title' => $title,
+                'body' => $message,
+                'data' => [
+                    'dhikr_group_id' => $group->id,
+                    'group_name' => $group->name,
+                    'target_user_id' => $targetUserId,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error creating dhikr in-app notification: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'error' => 'Failed to create notification'], 500);
+        }
+
+        // Push to user's devices
+        try {
+            $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+            if (!empty($tokens)) {
+                \App\Jobs\SendPushNotification::dispatch(
+                    $tokens,
+                    $title,
+                    $message,
+                    ['dhikr_group_id' => $group->id, 'type' => 'dhikr_group_reminder', 'target_user_id' => $targetUserId]
+                );
+                \Log::info("Personalized Dhikr reminder sent to user {$targetUserId} in group {$group->id}");
+            } else {
+                \Log::warning("No device tokens found for user {$targetUserId}");
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error dispatching dhikr push notification: ' . $e->getMessage());
+            // Don't fail the request if push notification fails
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Personalized dhikr reminder sent successfully']);
     }
 }

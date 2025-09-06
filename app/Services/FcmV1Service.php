@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\DeviceToken;
+use App\Models\PushEvent;
+use Illuminate\Support\Facades\Log;
+
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Http;
 
@@ -36,9 +40,16 @@ class FcmV1Service
 
         $endpoint = sprintf('https://fcm.googleapis.com/v1/projects/%s/messages:send', $this->projectId);
 
+        Log::info('FCM (v1): sending tokens', [
+            'count' => count($tokens),
+            'notification_type' => $data['type'] ?? null,
+            'title' => $title,
+        ]);
+
         $chunks = array_chunk($tokens, 500);
         foreach ($chunks as $chunk) {
             foreach ($chunk as $token) {
+                Log::info('FCM (v1): sending to token');
                 $payload = [
                     'message' => [
                         'token' => $token,
@@ -46,21 +57,63 @@ class FcmV1Service
                             'title' => $title,
                             'body' => $body,
                         ],
-                        'data' => array_map('strval', $data),
+                        'data' => $this->convertDataForFcm($data),
                     ],
                 ];
 
                 try {
+                    // Log push event per token (v1) before send
+                    $dt = DeviceToken::where('device_token', $token)->first();
+                    PushEvent::create([
+                        'user_id' => $dt?->user_id,
+                        'device_token' => $token,
+                        'notification_type' => $data['type'] ?? null,
+                        'event' => 'sent_v1',
+                        'payload' => [
+                            'title' => $title,
+                            'body' => $body,
+                            'data' => $data,
+                        ],
+                    ]);
                     $accessToken = $this->getAccessToken();
                     Http::withToken($accessToken)
                         ->acceptJson()
                         ->post($endpoint, $payload)
                         ->throw();
                 } catch (\Throwable $e) {
+                    Log::error('FCM (v1) send error', [
+                        'message' => $e->getMessage(),
+                    ]);
+                    $dt = DeviceToken::where('device_token', $token)->first();
+                    PushEvent::create([
+                        'user_id' => $dt?->user_id,
+                        'device_token' => $token,
+                        'notification_type' => $data['type'] ?? null,
+                        'event' => 'error',
+                        'error_message' => $e->getMessage(),
+                    ]);
                     // swallow errors; consider logging in production
                 }
             }
         }
+    }
+
+    /**
+     * Convert data array to FCM-compatible format (flat string values only)
+     */
+    protected function convertDataForFcm(array $data): array
+    {
+        $converted = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                // Convert arrays to JSON strings for FCM
+                $converted[$key] = json_encode($value);
+            } else {
+                // Convert all other values to strings
+                $converted[$key] = (string) $value;
+            }
+        }
+        return $converted;
     }
 
     protected function getAccessToken(): string

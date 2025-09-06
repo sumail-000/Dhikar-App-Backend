@@ -8,6 +8,8 @@ use App\Models\GroupKhitmaProgress;
 use App\Models\InviteToken;
 use App\Models\KhitmaAssignment;
 use App\Models\User;
+use App\Traits\PersonalizedReminderTrait;
+use App\Jobs\SendJuzAssignmentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,7 @@ use Illuminate\Support\Carbon;
 
 class GroupController extends Controller
 {
+    use PersonalizedReminderTrait;
     // GET /api/groups
     public function index(Request $request)
     {
@@ -238,7 +241,10 @@ class GroupController extends Controller
 
         $group = Group::findOrFail($invite->group_id);
 
-        DB::transaction(function () use ($group, $user) {
+        $memberIds = [];
+        $shouldNotifyAutoAssignment = false;
+
+        DB::transaction(function () use ($group, $user, &$memberIds, &$shouldNotifyAutoAssignment) {
             GroupMember::create([
                 'group_id' => $group->id,
                 'user_id' => $user->id,
@@ -280,8 +286,22 @@ class GroupController extends Controller
                         ['user_id' => null, 'status' => 'unassigned']
                     );
                 }
+                $shouldNotifyAutoAssignment = true;
             }
         });
+
+        // 🕌 Send notification if auto-assignment occurred when user joined
+        if ($shouldNotifyAutoAssignment && !empty($memberIds)) {
+            try {
+                SendJuzAssignmentNotification::dispatch(
+                    $group->id,
+                    'auto',
+                    $memberIds
+                )->delay(now()->addSeconds(2));
+            } catch (\Exception $e) {
+                \Log::error("Failed to dispatch join auto-assignment notification for group {$group->id}: " . $e->getMessage());
+            }
+        }
 
         return response()->json(['ok' => true, 'group_id' => $invite->group_id]);
     }
@@ -302,7 +322,10 @@ class GroupController extends Controller
             return response()->json(['ok' => true, 'message' => 'Already joined']);
         }
 
-        DB::transaction(function () use ($group, $user) {
+        $memberIds = [];
+        $shouldNotifyAutoAssignment = false;
+
+        DB::transaction(function () use ($group, $user, &$memberIds, &$shouldNotifyAutoAssignment) {
             GroupMember::create([
                 'group_id' => $group->id,
                 'user_id' => $user->id,
@@ -340,8 +363,22 @@ class GroupController extends Controller
                         ['user_id' => null, 'status' => 'unassigned']
                     );
                 }
+                $shouldNotifyAutoAssignment = true;
             }
         });
+
+        // 🕌 Send notification if auto-assignment occurred when user joined public group
+        if ($shouldNotifyAutoAssignment && !empty($memberIds)) {
+            try {
+                SendJuzAssignmentNotification::dispatch(
+                    $group->id,
+                    'auto',
+                    $memberIds
+                )->delay(now()->addSeconds(2));
+            } catch (\Exception $e) {
+                \Log::error("Failed to dispatch joinPublic auto-assignment notification for group {$group->id}: " . $e->getMessage());
+            }
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -518,6 +555,18 @@ class GroupController extends Controller
             }
         });
 
+        // 🕌 Send Islamic Juz assignment notifications to all group members
+        try {
+            SendJuzAssignmentNotification::dispatch(
+                $group->id,
+                'auto',
+                $memberIds
+            )->delay(now()->addSeconds(2)); // Small delay to ensure transaction completion
+        } catch (\Exception $e) {
+            \Log::error("Failed to dispatch auto-assignment notification for group {$group->id}: " . $e->getMessage());
+            // Don't fail the request if notification dispatch fails
+        }
+
         return response()->json(['ok' => true]);
     }
 
@@ -555,6 +604,9 @@ class GroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'Duplicate Juz numbers in payload'], 422);
         }
 
+        // Extract affected user IDs for notifications
+        $affectedUserIds = array_unique(array_column($payload['assignments'], 'user_id'));
+
         DB::transaction(function () use ($group, $payload) {
             // Disable future auto-assign recalculations once manual customization is applied
             $group->auto_assign_enabled = false;
@@ -570,6 +622,19 @@ class GroupController extends Controller
                 }
             }
         });
+
+        // 🕌 Send Islamic Juz assignment notifications to affected users with specific Juz details
+        try {
+            SendJuzAssignmentNotification::dispatch(
+                $group->id,
+                'manual',
+                $affectedUserIds,
+                $payload['assignments'] // Include specific assignment details
+            )->delay(now()->addSeconds(2)); // Small delay to ensure transaction completion
+        } catch (\Exception $e) {
+            \Log::error("Failed to dispatch manual-assignment notification for group {$group->id}: " . $e->getMessage());
+            // Don't fail the request if notification dispatch fails
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -916,7 +981,7 @@ class GroupController extends Controller
             'message' => ['nullable','string','max:500'],
         ]);
         $targetUserId = (int) $payload['user_id'];
-        $message = $payload['message'] ?? 'Reminder: Please update your assigned Juz progress.';
+        $customMessage = $payload['message'] ?? null;
 
         // Ensure target is member of the group
         $isMember = GroupMember::where('group_id', $group->id)->where('user_id', $targetUserId)->exists();
@@ -924,30 +989,62 @@ class GroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'User is not a member of this group'], 422);
         }
 
-        // Create in-app notification
-        \App\Models\AppNotification::create([
-            'user_id' => $targetUserId,
-            'type' => 'group_khitma_reminder',
-            'title' => 'Khitma Group Reminder',
-            'body' => $message,
-            'data' => [
-                'group_id' => $group->id,
-                'group_name' => $group->name,
-                'target_user_id' => $targetUserId,
-            ],
-        ]);
-
-        // Push to user's devices
-        $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
-        if (!empty($tokens)) {
-            \App\Jobs\SendPushNotification::dispatch(
-                $tokens,
-                'Khitma Group Reminder',
-                $message,
-                ['group_id' => $group->id, 'type' => 'group_khitma_reminder', 'target_user_id' => $targetUserId]
-            );
+        // Get target user safely
+        $targetUser = $this->getUserSafely($targetUserId);
+        if (!$targetUser) {
+            return response()->json(['ok' => false, 'error' => 'Target user not found'], 404);
         }
 
-        return response()->json(['ok' => true]);
+        // Generate personalized reminder message
+        try {
+            $reminderData = $this->generateKhitmaReminderMessage($targetUser, $group, $customMessage);
+            $message = $reminderData['message'];
+            $title = $reminderData['title'];
+        } catch (\Exception $e) {
+            \Log::error('Error generating personalized reminder message: ' . $e->getMessage());
+            // Fallback to simple message if personalization fails
+            $firstName = $this->getFirstName($targetUser->username ?? 'Friend');
+            $message = "Salam {$firstName}! Please check your group participation.";
+            $title = "Khitma Group Reminder - {$group->name}";
+        }
+
+        // Create in-app notification with personalized message
+        try {
+            \App\Models\AppNotification::create([
+                'user_id' => $targetUserId,
+                'type' => 'group_khitma_reminder',
+                'title' => $title,
+                'body' => $message,
+                'data' => [
+                    'group_id' => $group->id,
+                    'group_name' => $group->name,
+                    'target_user_id' => $targetUserId,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error creating in-app notification: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'error' => 'Failed to create notification'], 500);
+        }
+
+        // Push to user's devices
+        try {
+            $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+            if (!empty($tokens)) {
+                \App\Jobs\SendPushNotification::dispatch(
+                    $tokens,
+                    $title,
+                    $message,
+                    ['group_id' => $group->id, 'type' => 'group_khitma_reminder', 'target_user_id' => $targetUserId]
+                );
+                \Log::info("Personalized Khitma reminder sent to user {$targetUserId} in group {$group->id}");
+            } else {
+                \Log::warning("No device tokens found for user {$targetUserId}");
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error dispatching push notification: ' . $e->getMessage());
+            // Don't fail the request if push notification fails
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Personalized reminder sent successfully']);
     }
 }

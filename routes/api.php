@@ -41,6 +41,9 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\NotificationController;
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Push tracking (client receipts)
+    Route::post('push/received', [\App\Http\Controllers\PushTrackingController::class, 'received']);
+    Route::post('push/opened', [\App\Http\Controllers\PushTrackingController::class, 'opened']);
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/delete/check', [AuthController::class, 'checkDeletePassword']);

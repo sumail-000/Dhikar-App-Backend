@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\DeviceToken;
+use App\Models\PushEvent;
+use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Http;
 
 class FcmService
@@ -31,6 +35,13 @@ class FcmService
             return;
         }
 
+        Log::info('FCM: preparing to send (legacy/v1 switch)', [
+            'use_v1' => $this->useV1,
+            'tokens_count' => count($tokens),
+            'notification_type' => $data['type'] ?? null,
+            'title' => $title,
+        ]);
+
         if ($this->useV1 && $this->v1) {
             // Use HTTP v1 API (chunks handled by service)
             $this->v1->sendToTokens($tokens, $title, $body, $data);
@@ -45,6 +56,10 @@ class FcmService
         // Legacy HTTP API fallback
         $chunks = array_chunk($tokens, 500);
         foreach ($chunks as $chunk) {
+            Log::info('FCM (legacy): sending chunk', [
+                'size' => count($chunk),
+                'notification_type' => $data['type'] ?? null,
+            ]);
             $payload = [
                 'registration_ids' => array_values($chunk),
                 'notification' => [
@@ -57,11 +72,39 @@ class FcmService
             ];
 
             try {
+                // Log push events per token (legacy)
+                foreach ($chunk as $t) {
+                    $dt = DeviceToken::where('device_token', $t)->first();
+                    PushEvent::create([
+                        'user_id' => $dt?->user_id,
+                        'device_token' => $t,
+                        'notification_type' => $data['type'] ?? null,
+                        'event' => 'sent_legacy',
+                        'payload' => [
+                            'title' => $title,
+                            'body' => $body,
+                            'data' => $data,
+                        ],
+                    ]);
+                }
                 Http::withHeaders([
                     'Authorization' => 'key='.$this->serverKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://fcm.googleapis.com/fcm/send', $payload);
             } catch (\Throwable $e) {
+                Log::error('FCM (legacy) send error', [
+                    'message' => $e->getMessage(),
+                ]);
+                foreach ($chunk as $t) {
+                    $dt = DeviceToken::where('device_token', $t)->first();
+                    PushEvent::create([
+                        'user_id' => $dt?->user_id,
+                        'device_token' => $t,
+                        'notification_type' => $data['type'] ?? null,
+                        'event' => 'error',
+                        'error_message' => $e->getMessage(),
+                    ]);
+                }
                 // swallow errors; consider logging in production
             }
         }

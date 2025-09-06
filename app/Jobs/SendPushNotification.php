@@ -30,10 +30,18 @@ class SendPushNotification implements ShouldQueue
         $this->title = $title;
         $this->body = $body;
         $this->data = $data;
+        
+        // Set the queue name using the trait method
+        $this->onQueue('notifications');
     }
 
     public function handle(FcmService $fcm): void
     {
+        \Log::info('Queue: sending push notification', [
+            'tokens_count' => count($this->tokens),
+            'title' => $this->title,
+            'data_type' => $this->data['type'] ?? null,
+        ]);
         $fcm->sendToTokens($this->tokens, $this->title, $this->body, $this->data);
     }
 }
