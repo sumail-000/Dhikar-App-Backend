@@ -477,7 +477,12 @@ class DhikrGroupController extends Controller
         $memberIds = DhikrGroupMember::where('dhikr_group_id', $group->id)
             ->pluck('user_id')->values()->all();
 
-        $tokens = \App\Models\DeviceToken::whereIn('user_id', $memberIds)
+        // Filter by user preferences (allow_group_notifications)
+        $eligibleUserIds = array_values(array_filter($memberIds, function ($uid) {
+            return \App\Models\UserNotificationPreference::allowsGroup((int) $uid);
+        }));
+
+        $tokens = \App\Models\DeviceToken::whereIn('user_id', $eligibleUserIds)
             ->pluck('device_token')->values()->all();
 
         foreach ($memberIds as $uid) {
@@ -564,9 +569,13 @@ class DhikrGroupController extends Controller
             return response()->json(['ok' => false, 'error' => 'Failed to create notification'], 500);
         }
 
-        // Push to user's devices
+        // Push to user's devices (respect preferences)
         try {
-            $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+            if (!\App\Models\UserNotificationPreference::allowsGroup($targetUserId)) {
+                $tokens = [];
+            } else {
+                $tokens = \App\Models\DeviceToken::where('user_id', $targetUserId)->pluck('device_token')->values()->all();
+            }
             if (!empty($tokens)) {
                 \App\Jobs\SendPushNotification::dispatch(
                     $tokens,

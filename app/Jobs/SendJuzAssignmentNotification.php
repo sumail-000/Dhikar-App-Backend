@@ -88,6 +88,11 @@ class SendJuzAssignmentNotification implements ShouldQueue
     private function sendNotificationToUser(User $user, Group $group, string $adminName, string $type, ?array $userAssignments = null): void
     {
         try {
+            // Respect user preference for group notifications
+            if (!\App\Models\UserNotificationPreference::allowsGroup($user->id)) {
+                return;
+            }
+
             // Get user's device tokens for localization
             $deviceTokens = DeviceToken::where('user_id', $user->id)
                 ->whereNotNull('device_token')

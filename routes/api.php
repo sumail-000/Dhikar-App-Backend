@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PersonalKhitmaController;
+use App\Http\Controllers\UserPreferencesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -134,6 +135,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
+
+    // User preferences
+    Route::get('user/preferences', [UserPreferencesController::class, 'show']);
+    Route::put('user/preferences', [UserPreferencesController::class, 'update']);
 
     // Personal Khitma endpoints
     Route::get('personal-khitma', [PersonalKhitmaController::class, 'index']);

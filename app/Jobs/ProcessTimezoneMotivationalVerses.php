@@ -213,6 +213,11 @@ class ProcessTimezoneMotivationalVerses implements ShouldQueue
             return;
         }
 
+        // Respect user preference for motivational notifications
+        if (!\App\Models\UserNotificationPreference::allowsMotivation((int)$user['id'])) {
+            return;
+        }
+
         // Get user's device tokens
         $deviceTokens = DeviceToken::where('user_id', $user['id'])
             ->whereNotNull('device_token')

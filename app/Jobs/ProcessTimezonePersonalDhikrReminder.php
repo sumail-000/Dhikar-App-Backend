@@ -130,6 +130,11 @@ class ProcessTimezonePersonalDhikrReminder implements ShouldQueue
     private function sendReminderToUser(User $user): int
     {
         try {
+            // Respect user preference for personal reminders
+            if (!\App\Models\UserNotificationPreference::allowsPersonal($user->id)) {
+                return 0;
+            }
+
             // Collect tokens for the user
             $deviceTokens = DeviceToken::where('user_id', $user->id)
                 ->whereNotNull('device_token')
