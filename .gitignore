@@ -11,11 +11,12 @@
 /.phpunit.cache
 /.vscode
 /.zed
+/admin-panel
 /auth.json
 /node_modules
 /public/build
 /public/hot
-/wered
+/FLUTTER APP
 /public/storage
 /storage/*.key
 /storage/pail

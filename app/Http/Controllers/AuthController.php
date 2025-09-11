@@ -24,6 +24,7 @@ class AuthController extends Controller
             'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'status' => 'active',
         ]);
 
         $token = $user->createToken('mobile')->plainTextToken;
@@ -52,6 +53,14 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
+        }
+
+        // Block suspended users
+        if ($user->status === 'suspended') {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your account is suspended. Please contact support.'
+            ], 403);
         }
 
         // Revoke previous tokens (optional);

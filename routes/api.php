@@ -41,6 +41,78 @@ use App\Http\Controllers\MotivationController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\NotificationController;
 
+// Admin Authentication Routes (no middleware)
+Route::prefix('admin')->group(function () {
+    Route::post('auth/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'login']);
+});
+
+
+// Admin Protected Routes
+Route::prefix('admin')->middleware(['auth:sanctum', \App\Http\Middleware\AdminAuth::class])->group(function () {
+    // Admin Auth
+    Route::post('auth/logout', [\App\Http\Controllers\Admin\AdminAuthController::class, 'logout']);
+    Route::get('auth/me', [\App\Http\Controllers\Admin\AdminAuthController::class, 'me']);
+    Route::post('auth/refresh', [\App\Http\Controllers\Admin\AdminAuthController::class, 'refresh']);
+
+    // User Management
+    Route::get('users', [\App\Http\Controllers\Admin\AdminUserController::class, 'index']);
+    Route::get('users/statistics', [\App\Http\Controllers\Admin\AdminUserController::class, 'statistics']);
+    Route::get('users/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'show']);
+    Route::post('users/{id}/suspend', [\App\Http\Controllers\Admin\AdminUserController::class, 'suspend']);
+    Route::post('users/{id}/activate', [\App\Http\Controllers\Admin\AdminUserController::class, 'activate']);
+    Route::delete('users/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy']);
+
+    // Analytics
+    Route::get('analytics/dashboard', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'dashboard']);
+    Route::get('analytics/users', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'users']);
+    Route::get('analytics/groups', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'groups']);
+    Route::get('analytics/activity', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'activity']);
+    Route::get('analytics/group-distribution', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'groupDistribution']);
+    Route::get('analytics/most-used-verses', [\App\Http\Controllers\Admin\AdminAnalyticsController::class, 'mostUsedVerses']);
+
+    // Admin Groups listing
+    Route::get('groups', [\App\Http\Controllers\Admin\AdminGroupController::class, 'indexKhitma']);
+    Route::get('groups/{id}', [\App\Http\Controllers\Admin\AdminGroupController::class, 'showKhitma']);
+    Route::get('dhikr-groups', [\App\Http\Controllers\Admin\AdminGroupController::class, 'indexDhikr']);
+    Route::get('dhikr-groups/{id}', [\App\Http\Controllers\Admin\AdminGroupController::class, 'showDhikr']);
+
+    // Group Management (enable/disable/delete)
+    Route::post('groups/{id}/disable', [\App\Http\Controllers\Admin\AdminGroupController::class, 'disableKhitma']);
+    Route::post('groups/{id}/enable', [\App\Http\Controllers\Admin\AdminGroupController::class, 'enableKhitma']);
+    Route::delete('groups/{id}', [\App\Http\Controllers\Admin\AdminGroupController::class, 'deleteKhitma']);
+
+    Route::post('dhikr-groups/{id}/disable', [\App\Http\Controllers\Admin\AdminGroupController::class, 'disableDhikr']);
+    Route::post('dhikr-groups/{id}/enable', [\App\Http\Controllers\Admin\AdminGroupController::class, 'enableDhikr']);
+    Route::delete('dhikr-groups/{id}', [\App\Http\Controllers\Admin\AdminGroupController::class, 'deleteDhikr']);
+
+    // Admin profile
+    Route::post('profile', [\App\Http\Controllers\Admin\AdminProfileController::class, 'update']);
+    Route::get('profile/avatar', [\App\Http\Controllers\Admin\AdminProfileController::class, 'avatar']);
+    Route::delete('profile/avatar', [\App\Http\Controllers\Admin\AdminProfileController::class, 'deleteAvatar']);
+    Route::post('profile/password', [\App\Http\Controllers\Admin\AdminProfileController::class, 'changePassword']);
+
+    // Motivational Verses Management (real routes)
+    Route::get('motivational-verses', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'index']);
+    Route::post('motivational-verses', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'store']);
+    Route::get('motivational-verses/{id}', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'show']);
+    Route::put('motivational-verses/{id}', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'update']);
+    Route::delete('motivational-verses/{id}', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'destroy']);
+    Route::post('motivational-verses/{id}/toggle', [\App\Http\Controllers\Admin\AdminMotivationalVerseController::class, 'toggle']);
+
+    // Notification Management (placeholder routes)
+    Route::get('notifications/stats', function () {
+        $stats = [
+            'total_sent' => \App\Models\AppNotification::count(),
+            'total_read' => \App\Models\AppNotification::whereNotNull('read_at')->count(),
+        ];
+        return response()->json(['ok' => true, 'stats' => $stats]);
+    });
+    Route::post('notifications/send', function (\Illuminate\Http\Request $request) {
+        // Placeholder for sending notifications
+        return response()->json(['ok' => true, 'message' => 'Notification sent (placeholder)']);
+    });
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     // Push tracking (client receipts)
     Route::post('push/received', [\App\Http\Controllers\PushTrackingController::class, 'received']);
